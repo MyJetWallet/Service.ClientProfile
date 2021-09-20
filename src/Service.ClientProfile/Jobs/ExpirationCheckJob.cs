@@ -35,7 +35,7 @@ namespace Service.ClientProfile.Jobs
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             
             var updatedProfiles = new List<Domain.Models.ClientProfile>();
-            var profiles = context.ClientProfiles.ToList();
+            var profiles = context.ClientProfiles.Include(t=>t.Blockers).ToList();
             foreach (var profile in profiles)
             {
                 var expiredBlockers = profile.Blockers?.RemoveAll(t => t.ExpiryTime < DateTime.UtcNow);
