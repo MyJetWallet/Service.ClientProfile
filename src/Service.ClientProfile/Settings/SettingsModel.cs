@@ -28,5 +28,12 @@ namespace Service.ClientProfile.Settings
         
         [YamlProperty("ClientProfile.ExpirationCheckTimerInMin")]
         public int ExpirationCheckTimerInMin { get; set; }
+        
+        [YamlProperty("ClientProfile.PersonalDataServiceBusHostPort")]
+        public string PersonalDataServiceBusHostPort { get; set; }
+        
+        [YamlProperty("ClientProfile.PersonalDataServiceUrl")]
+        public string PersonalDataServiceUrl { get; set; }
+        
     }
 }

@@ -10,27 +10,33 @@ namespace Service.ClientProfile
     public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
     {
         private readonly ILogger<ApplicationLifetimeManager> _logger;
-        private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
+        private readonly MyServiceBusTcpClient[] _myServiceBusTcpClients;
         private readonly ExpirationCheckJob _expirationCheckJob;
-        public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, ILogger<ApplicationLifetimeManager> logger, MyServiceBusTcpClient myServiceBusTcpClient, ExpirationCheckJob expirationCheckJob)
+        public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, ILogger<ApplicationLifetimeManager> logger, MyServiceBusTcpClient[] myServiceBusTcpClients, ExpirationCheckJob expirationCheckJob)
             : base(appLifetime)
         {
             _logger = logger;
-            _myServiceBusTcpClient = myServiceBusTcpClient;
+            _myServiceBusTcpClients = myServiceBusTcpClients;
             _expirationCheckJob = expirationCheckJob;
         }
 
         protected override void OnStarted()
         {
             _logger.LogInformation("OnStarted has been called.");
-            _myServiceBusTcpClient.Start();
+            foreach (var client in _myServiceBusTcpClients)
+            {
+                client.Start();
+            }
             _expirationCheckJob.Start();
         }
 
         protected override void OnStopping()
         {
             _logger.LogInformation("OnStopping has been called."); 
-            _myServiceBusTcpClient.Stop();
+            foreach (var client in _myServiceBusTcpClients)
+            {
+                client.Stop();
+            }      
             _expirationCheckJob.Dispose();
         }
 
