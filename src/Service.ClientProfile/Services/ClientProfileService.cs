@@ -1,0 +1,239 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using DotNetCoreDecorators;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using MyNoSqlServer.Abstractions;
+using Service.ClientProfile.Domain.Models;
+using Service.ClientProfile.Domain.Models.NoSql;
+using Service.ClientProfile.Grpc.Models;
+using Service.ClientProfile.Grpc.Models.Requests;
+using Service.ClientProfile.Grpc.Models.Responses;
+using Service.ClientProfile.Postgres;
+
+namespace Service.ClientProfile.Services
+{
+    public class ClientProfileService
+    {
+        private readonly ILogger<ClientProfileServiceGrpc> _logger;
+        private readonly IPublisher<ClientProfileUpdateMessage> _publisher;
+        private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
+        private readonly ProfileCacheManager _cache;
+
+        public ClientProfileService(IPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache)
+        {
+            _publisher = publisher;
+            _logger = logger;
+            _dbContextOptionsBuilder = dbContextOptionsBuilder;
+            _cache = cache;
+        }
+
+        public async Task<ClientProfileUpdateResponse> AddBlockerToClient(AddBlockerToClientRequest request)
+        {
+            _logger.LogInformation("Adding blocker for clientId {clientId}, type {type}, reason {reason}, expiry time {expiryTime}", request.ClientId, request.Type.ToString(), request.BlockerReason, request.ExpiryTime);
+            try
+            {
+                var profile = await GetOrCreateProfile(request.ClientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+                profile.Blockers.Add(new Blocker()
+                {
+                    Reason = request.BlockerReason,
+                    BlockedOperationType = request.Type,
+                    ExpiryTime = request.ExpiryTime
+                });
+
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ClientProfiles.Update(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+                
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When adding blocker to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }
+        }
+
+        public async Task<ClientProfileUpdateResponse> DeleteBlockerFromClient(DeleteBlockerFromClientRequest request)
+        {
+            _logger.LogInformation("Removing blocker for clientId {clientId}, blockerId {blockerId}", request.ClientId, request.BlockerId.ToString());
+            try
+            {
+                var profile = await GetOrCreateProfile(request.ClientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+
+                var blocker = profile.Blockers?.FirstOrDefault(t => t.BlockerId == request.BlockerId);
+                if(blocker != null)
+                    profile.Blockers.Remove(blocker);
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ClientProfiles.Update(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When removing blocker to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }        
+        }
+
+        public async Task<ClientProfileUpdateResponse> Enable2Fa(Enable2FaRequest request)
+        {
+            _logger.LogInformation("Enabling 2FA for clientId {clientId}", request.ClientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(request.ClientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+
+                profile.Status2FA = Status2FA.Enabled;
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ClientProfiles.Update(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When enabling 2FA to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }
+        }
+
+        public async Task<ClientProfileUpdateResponse> Disable2Fa(Disable2FaRequest request)
+        {
+            _logger.LogInformation("Disabling 2FA for clientId {clientId}", request.ClientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(request.ClientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+           
+                profile.Status2FA = Status2FA.Disabled; 
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ClientProfiles.Update(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When disabling 2FA to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }
+            
+        }
+
+        public async Task<Domain.Models.ClientProfile> GetOrCreateProfile(GetClientProfileRequest request) =>
+            await GetOrCreateProfile(request.ClientId);
+
+        public async Task<GetAllClientProfilesResponse> GetAllProfiles()
+        { 
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var entities = context.ClientProfiles
+                .Include(t=>t.Blockers)
+                .ToList();
+            
+            return new GetAllClientProfilesResponse()
+            {
+                ClientProfiles = entities
+            };
+        }
+
+
+        private async Task<Domain.Models.ClientProfile> GetOrCreateProfile(string clientId)
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var clientProfile = context.ClientProfiles
+                .Include(t=>t.Blockers)
+                .FirstOrDefault(t => t.ClientId == clientId);
+
+            if (clientProfile != null)
+                return clientProfile;
+
+            _logger.LogInformation("Profile for clientId {clientId} not found. Creating new profile", clientId);
+
+            var profile = new Domain.Models.ClientProfile
+            {
+                ClientId = clientId,
+                Status2FA = Status2FA.NotSet,
+                Blockers = new List<Blocker>()
+            };
+            
+            await context.ClientProfiles.AddAsync(profile);
+            await context.SaveChangesAsync();
+            await _cache.AddOrUpdateClientProfile(profile);
+
+            return profile;
+        }
+    }
+}
