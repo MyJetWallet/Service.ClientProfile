@@ -82,10 +82,18 @@ namespace Service.ClientProfile.Services
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
 
                 var blocker = profile.Blockers?.FirstOrDefault(t => t.BlockerId == request.BlockerId);
-                if(blocker != null)
-                    profile.Blockers.Remove(blocker);
+                if (blocker == null)
+                    return new ClientProfileUpdateResponse()
+                    {
+                        ClientId = request.ClientId,
+                        IsSuccess = false,
+                        Error = "Blocker not found"
+                    };
+                
+                profile.Blockers.Remove(blocker);
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.Blockers.Remove(blocker);
                 context.ClientProfiles.Update(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
