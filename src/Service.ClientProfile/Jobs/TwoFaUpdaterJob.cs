@@ -27,7 +27,7 @@ namespace Service.ClientProfile.Jobs
             if(pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) || pd.PersonalData.ConfirmPhone == null)
                 return;
 
-            if (pd.PersonalData.ConfirmPhone != null && pd.PersonalData.KYC is PersonalDataKYCEnum.Verified)
+            if (pd.PersonalData.ConfirmPhone != null)
             {
                 var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
                 {
