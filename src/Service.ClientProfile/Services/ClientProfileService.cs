@@ -35,6 +35,14 @@ namespace Service.ClientProfile.Services
             _logger.LogInformation("Adding blocker for clientId {clientId}, type {type}, reason {reason}, expiry time {expiryTime}", request.ClientId, request.Type.ToString(), request.BlockerReason, request.ExpiryTime);
             try
             {
+                if (request.ExpiryTime < DateTime.UtcNow)
+                    return new ClientProfileUpdateResponse()
+                    {
+                        IsSuccess = false,
+                        ClientId = request.ClientId,
+                        Error = "Blocker expiry time already passed"
+                    };
+                
                 var profile = await GetOrCreateProfile(request.ClientId);
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
                 profile.Blockers.Add(new Blocker()
