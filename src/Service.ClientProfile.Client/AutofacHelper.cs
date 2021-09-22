@@ -24,7 +24,7 @@ namespace Service.ClientProfile.Client
         /// Register interfaces:
         ///   * IClientProfileService
         /// </summary>
-        public static void RegisterClientWalletsClients(this ContainerBuilder builder, IMyNoSqlSubscriber myNoSqlSubscriber, string grpcServiceUrl)
+        public static void RegisterClientProfileClients(this ContainerBuilder builder, IMyNoSqlSubscriber myNoSqlSubscriber, string grpcServiceUrl)
         {
             var subs = new MyNoSqlReadRepository<ClientProfileNoSqlEntity>(myNoSqlSubscriber, ClientProfileNoSqlEntity.TableName);
 
