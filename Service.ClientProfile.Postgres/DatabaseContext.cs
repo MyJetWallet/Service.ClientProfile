@@ -47,9 +47,15 @@ namespace Service.ClientProfile.Postgres
             base.OnModelCreating(modelBuilder);
         }
 
-        public async Task<int> UpsetAsync(IEnumerable<Domain.Models.ClientProfile> entities)
+        public async Task<int> UpsertAsync(IEnumerable<Domain.Models.ClientProfile> entities)
         {
-            var result = await ClientProfiles.UpsertRange(entities).On(e => e.ClientId).NoUpdate().RunAsync();
+            var result = await ClientProfiles.UpsertRange(entities).WhenMatched((oldEntity, newEntity) => newEntity).AllowIdentityMatch().RunAsync();
+            return result;
+        }
+        
+        public async Task<int> UpsertAsync(Domain.Models.ClientProfile entity)
+        {
+            var result = await ClientProfiles.Upsert(entity).On(e => e.ClientId).AllowIdentityMatch().RunAsync();
             return result;
         }
 

@@ -53,7 +53,7 @@ namespace Service.ClientProfile.Services
                 });
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                context.ClientProfiles.Update(profile);
+                await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
                 
@@ -141,7 +141,7 @@ namespace Service.ClientProfile.Services
                 profile.Status2FA = Status2FA.Enabled;
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                context.ClientProfiles.Update(profile);
+                await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
@@ -180,7 +180,7 @@ namespace Service.ClientProfile.Services
                 profile.Status2FA = Status2FA.Disabled; 
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                context.ClientProfiles.Update(profile);
+                await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
@@ -265,7 +265,7 @@ namespace Service.ClientProfile.Services
                 profile.PhoneConfirmed = phoneConfirmed;
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                context.ClientProfiles.Update(profile);
+                await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
