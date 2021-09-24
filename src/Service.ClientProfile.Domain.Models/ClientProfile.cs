@@ -11,8 +11,9 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 1)] public string ClientId { get; set; }
         [DataMember(Order = 2)] public Status2FA Status2FA { get; set; }
         [DataMember(Order = 3)] public List<Blocker> Blockers { get; set; }
-        
-        
+        [DataMember(Order = 4)] public bool EmailConfirmed { get; set; }
+        [DataMember(Order = 5)] public bool PhoneConfirmed { get; set; }
+
         public object Clone()
         {
             var profile = (ClientProfile)MemberwiseClone();

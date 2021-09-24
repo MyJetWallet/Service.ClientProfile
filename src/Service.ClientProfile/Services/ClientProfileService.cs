@@ -251,5 +251,46 @@ namespace Service.ClientProfile.Services
 
             return profile;
         }
+
+        public async Task<ClientProfileUpdateResponse> UpdateConfirmStatuses(string clientId, bool phoneConfirmed, bool emailConfirmed)
+        {
+
+            _logger.LogInformation("Updating confirm statuses for clientId {clientId}", clientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(clientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+           
+                profile.EmailConfirmed = emailConfirmed;
+                profile.PhoneConfirmed = phoneConfirmed;
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ClientProfiles.Update(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = clientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When disabling 2FA to client {clientId}", clientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = clientId,
+                    Error = e.Message
+                };
+            }
+        }
     }
 }

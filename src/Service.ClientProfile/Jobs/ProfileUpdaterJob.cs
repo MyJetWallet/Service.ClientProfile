@@ -9,31 +9,34 @@ using SimpleTrading.PersonalData.Grpc;
 
 namespace Service.ClientProfile.Jobs
 {
-    public class TwoFaUpdaterJob {
+    public class ProfileUpdaterJob {
         private readonly IPersonalDataServiceGrpc _personalDataService;
         private readonly ClientProfileService _clientProfileService;
         
-        public TwoFaUpdaterJob(IPersonalDataServiceGrpc personalDataService,
+        public ProfileUpdaterJob(IPersonalDataServiceGrpc personalDataService,
             ISubscriber<ITraderUpdate> personalDataSubscriber, ClientProfileService clientProfileService)
         {
             _personalDataService = personalDataService;
             _clientProfileService = clientProfileService;
-            personalDataSubscriber.Subscribe(Update2FaStatusIfNeeded);
+            personalDataSubscriber.Subscribe(UpdateProfileStatusesIfNeeded);
         }
 
-        private async ValueTask Update2FaStatusIfNeeded(ITraderUpdate traderUpdate)
+        private async ValueTask UpdateProfileStatusesIfNeeded(ITraderUpdate traderUpdate)
         {
             var pd = await _personalDataService.GetByIdAsync(traderUpdate.TraderId);
             if(pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) || pd.PersonalData.ConfirmPhone == null)
                 return;
 
-            if (pd.PersonalData.ConfirmPhone != null)
+            var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
             {
-                var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
-                {
-                    ClientId = traderUpdate.TraderId
-                });
+                ClientId = traderUpdate.TraderId
+            });
 
+            var confirmPhone = pd.PersonalData.ConfirmPhone != null;
+            var confirmEmail = pd.PersonalData.Confirm != null;
+            
+            if (confirmPhone)
+            {
                 if (client.Status2FA == Status2FA.NotSet)
                 {
                     await _clientProfileService.Enable2Fa(new Enable2FaRequest()
@@ -41,6 +44,10 @@ namespace Service.ClientProfile.Jobs
                         ClientId = traderUpdate.TraderId
                     });
                 }
+            }
+            if (client.PhoneConfirmed != confirmPhone || client.EmailConfirmed != confirmEmail)
+            {
+                await _clientProfileService.UpdateConfirmStatuses(traderUpdate.TraderId, confirmPhone, confirmEmail);
             }
         }
     }

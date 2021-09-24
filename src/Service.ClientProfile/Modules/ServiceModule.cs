@@ -44,7 +44,7 @@ namespace Service.ClientProfile.Modules
             builder.RegisterType<ClientProfileService>().AsSelf().SingleInstance();
             builder.RegisterType<ProfileCacheManager>().AsSelf().SingleInstance();
             builder.RegisterType<ExpirationCheckJob>().AsSelf().AutoActivate().SingleInstance();
-            builder.RegisterType<TwoFaUpdaterJob>().AsSelf().AutoActivate().SingleInstance();
+            builder.RegisterType<ProfileUpdaterJob>().AsSelf().AutoActivate().SingleInstance();
         }
     }
 }
