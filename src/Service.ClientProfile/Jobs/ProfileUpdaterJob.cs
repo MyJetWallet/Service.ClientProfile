@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Service.ClientProfile.Domain.Models;
@@ -24,7 +25,7 @@ namespace Service.ClientProfile.Jobs
         private async ValueTask UpdateProfileStatusesIfNeeded(ITraderUpdate traderUpdate)
         {
             var pd = await _personalDataService.GetByIdAsync(traderUpdate.TraderId);
-            if(pd.PersonalData == null || string.IsNullOrEmpty(pd.PersonalData.Phone) || pd.PersonalData.ConfirmPhone == null)
+            if(pd.PersonalData == null)
                 return;
 
             var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
