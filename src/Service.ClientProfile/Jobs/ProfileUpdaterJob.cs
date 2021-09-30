@@ -1,12 +1,13 @@
-using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Services;
-using SimpleTrading.PersonalData.Abstractions.PersonalData;
+using Service.PersonalData.Domain.Models.ServiceBus;
+using Service.PersonalData.Grpc;
+using Service.PersonalData.Grpc.Contracts;
 using SimpleTrading.PersonalData.Abstractions.PersonalDataUpdate;
-using SimpleTrading.PersonalData.Grpc;
 
 namespace Service.ClientProfile.Jobs
 {
@@ -15,40 +16,48 @@ namespace Service.ClientProfile.Jobs
         private readonly ClientProfileService _clientProfileService;
         
         public ProfileUpdaterJob(IPersonalDataServiceGrpc personalDataService,
-            ISubscriber<ITraderUpdate> personalDataSubscriber, ClientProfileService clientProfileService)
+            ISubscriber<IReadOnlyList<PersonalDataUpdateMessage>> personalDataSubscriber, ClientProfileService clientProfileService)
         {
             _personalDataService = personalDataService;
             _clientProfileService = clientProfileService;
             personalDataSubscriber.Subscribe(UpdateProfileStatusesIfNeeded);
         }
 
-        private async ValueTask UpdateProfileStatusesIfNeeded(ITraderUpdate traderUpdate)
+        private async ValueTask UpdateProfileStatusesIfNeeded(IReadOnlyList<PersonalDataUpdateMessage> traderUpdates)
         {
-            var pd = await _personalDataService.GetByIdAsync(traderUpdate.TraderId);
-            if(pd.PersonalData == null)
-                return;
-
-            var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
+            foreach (var traderUpdate in traderUpdates)
             {
-                ClientId = traderUpdate.TraderId
-            });
-
-            var confirmPhone = pd.PersonalData.ConfirmPhone != null;
-            var confirmEmail = pd.PersonalData.Confirm != null;
-            
-            if (confirmPhone)
-            {
-                if (client.Status2FA == Status2FA.NotSet)
+                var pd = await _personalDataService.GetByIdAsync(new GetByIdRequest()
                 {
-                    await _clientProfileService.Enable2Fa(new Enable2FaRequest()
+                    Id = traderUpdate.TraderId
+                });
+                if (pd.PersonalData == null)
+                    return;
+
+                var client = await _clientProfileService.GetOrCreateProfile(new GetClientProfileRequest()
+                {
+                    ClientId = traderUpdate.TraderId
+                });
+
+                var confirmPhone = pd.PersonalData.ConfirmPhone != null;
+                var confirmEmail = pd.PersonalData.Confirm != null;
+
+                if (confirmPhone)
+                {
+                    if (client.Status2FA == Status2FA.NotSet)
                     {
-                        ClientId = traderUpdate.TraderId
-                    });
+                        await _clientProfileService.Enable2Fa(new Enable2FaRequest()
+                        {
+                            ClientId = traderUpdate.TraderId
+                        });
+                    }
                 }
-            }
-            if (client.PhoneConfirmed != confirmPhone || client.EmailConfirmed != confirmEmail)
-            {
-                await _clientProfileService.UpdateConfirmStatuses(traderUpdate.TraderId, confirmPhone, confirmEmail);
+
+                if (client.PhoneConfirmed != confirmPhone || client.EmailConfirmed != confirmEmail)
+                {
+                    await _clientProfileService.UpdateConfirmStatuses(traderUpdate.TraderId, confirmPhone,
+                        confirmEmail);
+                }
             }
         }
     }
