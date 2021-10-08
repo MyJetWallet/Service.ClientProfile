@@ -24,11 +24,7 @@ namespace Service.ClientProfile
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCodeFirstGrpc(options =>
-            {
-                options.Interceptors.Add<PrometheusMetricsInterceptor>();
-                options.BindMetricsInterceptors();
-            });
+            services.BindCodeFirstGrpc();
 
             services.AddHostedService<ApplicationLifetimeManager>();
             DatabaseContext.LoggerFactory = Program.LogFactory;

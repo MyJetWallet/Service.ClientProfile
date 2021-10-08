@@ -26,5 +26,8 @@ namespace Service.ClientProfile.Services
         public async Task<Domain.Models.ClientProfile> GetOrCreateProfile(GetClientProfileRequest request) => await _clientProfileService.GetOrCreateProfile(request);
 
         public async Task<GetAllClientProfilesResponse> GetAllProfiles() => await _clientProfileService.GetAllProfiles();
+
+        public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) =>
+           await _clientProfileService.SetKYCPassed(request);
     }
 }

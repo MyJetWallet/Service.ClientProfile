@@ -40,7 +40,8 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ClientId);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ClientId).HasMaxLength(128);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.Status2FA).HasDefaultValue(Status2FA.NotSet);
-            
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.KYCPassed).HasDefaultValue(false);
+
             modelBuilder.Entity<Blocker>().ToTable(BlockerTableName);
             modelBuilder.Entity<Blocker>().HasKey(e => e.BlockerId);
             modelBuilder.Entity<Blocker>().Property(e => e.BlockerId).UseIdentityColumn();

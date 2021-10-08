@@ -13,6 +13,7 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 3)] public List<Blocker> Blockers { get; set; }
         [DataMember(Order = 4)] public bool EmailConfirmed { get; set; }
         [DataMember(Order = 5)] public bool PhoneConfirmed { get; set; }
+        [DataMember(Order = 6)] public bool KYCPassed { get; set; }
 
         public object Clone()
         {

@@ -292,5 +292,46 @@ namespace Service.ClientProfile.Services
                 };
             }
         }
+        
+        public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request)
+        {
+            _logger.LogInformation("Setting KYC for clientId {clientId}", request.ClientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(request.ClientId);
+                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+           
+                profile.KYCPassed = true; 
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                await context.UpsertAsync(profile);
+                await context.SaveChangesAsync();
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When setting KYC to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }
+            
+        }
+        
     }
 }

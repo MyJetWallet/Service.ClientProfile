@@ -47,5 +47,7 @@ namespace Service.ClientProfile.Client
                 ClientProfiles = entities.Select(t => t.ClientProfile).ToList()
             };
         }
+
+        public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) => await _grpcService.SetKYCPassed(request);
     }
 }
