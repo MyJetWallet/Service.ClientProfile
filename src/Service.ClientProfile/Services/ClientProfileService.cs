@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using DotNetCoreDecorators;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using MyNoSqlServer.Abstractions;
 using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Domain.Models.NoSql;
@@ -18,11 +19,11 @@ namespace Service.ClientProfile.Services
     public class ClientProfileService
     {
         private readonly ILogger<ClientProfileServiceGrpc> _logger;
-        private readonly IPublisher<ClientProfileUpdateMessage> _publisher;
+        private readonly IServiceBusPublisher<ClientProfileUpdateMessage> _publisher;
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
         private readonly ProfileCacheManager _cache;
 
-        public ClientProfileService(IPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache)
+        public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache)
         {
             _publisher = publisher;
             _logger = logger;

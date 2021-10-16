@@ -14,7 +14,9 @@ namespace Service.ClientProfile.Modules
     {
         protected override void Load(ContainerBuilder builder)
         {
-            var spotServiceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
+            var spotServiceBusClient = builder
+                .RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), Program.LogFactory);
+            
             builder.RegisterMyServiceBusPublisher<ClientProfileUpdateMessage>(spotServiceBusClient, ClientProfileUpdateMessage.TopicName, false);
             builder.RegisterMyNoSqlWriter<ClientProfileNoSqlEntity>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), ClientProfileNoSqlEntity.TableName);
             
