@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.Serialization;
 
 namespace Service.ClientProfile.Domain.Models
@@ -9,5 +10,6 @@ namespace Service.ClientProfile.Domain.Models
 
         [DataMember (Order = 1)] public ClientProfile OldProfile { get; set; }
         [DataMember (Order = 2)] public ClientProfile NewProfile { get; set; }
+        [DataMember (Order = 3)] public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }
