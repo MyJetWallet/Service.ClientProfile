@@ -29,5 +29,7 @@ namespace Service.ClientProfile.Services
 
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) =>
            await _clientProfileService.SetKYCPassed(request);
+
+        public async Task<ClientByReferralResponse> GetProfileByReferralCode(GetProfileByReferralCodeRequest request) => await _clientProfileService.GetProfileByReferralCode(request.ReferralCode);
     }
 }

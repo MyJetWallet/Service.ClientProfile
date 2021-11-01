@@ -365,8 +365,16 @@ namespace Service.ClientProfile.Services
                     Error = e.Message
                 };
             }
-            
         }
         
+        public async Task<ClientByReferralResponse> GetProfileByReferralCode(string code)
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var profile = context.ClientProfiles.FirstOrDefault(t => t.ReferralCode == code);
+
+            return profile != null 
+                ?  new ClientByReferralResponse() { IsExists = true, ClientId = profile.ClientId }
+                : new ClientByReferralResponse() { IsExists = false };
+        }
     }
 }

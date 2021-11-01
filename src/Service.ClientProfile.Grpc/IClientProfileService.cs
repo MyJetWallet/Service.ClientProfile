@@ -29,5 +29,8 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request);
+        
+        [OperationContract]
+        Task<ClientByReferralResponse> GetProfileByReferralCode(GetProfileByReferralCodeRequest request);
     }
 }

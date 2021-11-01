@@ -49,5 +49,7 @@ namespace Service.ClientProfile.Client
         }
 
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) => await _grpcService.SetKYCPassed(request);
+        
+        public async Task<ClientByReferralResponse> GetProfileByReferralCode(GetProfileByReferralCodeRequest request) => await _grpcService.GetProfileByReferralCode(request);
     }
 }

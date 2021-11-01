@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MyNoSqlServer.Abstractions;
 using Service.ClientProfile.Domain.Models.NoSql;
+using Service.ClientProfile.Grpc.Models.Requests;
 
 namespace Service.ClientProfile.Services
 {
@@ -32,5 +33,7 @@ namespace Service.ClientProfile.Services
             }
             await Task.WhenAll(tasks);
         }
+
+
     }
 }
