@@ -235,7 +235,13 @@ namespace Service.ClientProfile.Services
                 .FirstOrDefault(t => t.ClientId == clientId);
 
             if (clientProfile != null)
+            {
+                if (string.IsNullOrEmpty(clientProfile.ReferralCode))
+                {
+                    clientProfile.ReferralCode = await AddReferralCodeToExistingUser(clientProfile);
+                }
                 return clientProfile;
+            }
 
             _logger.LogInformation("Profile for clientId {clientId} not found. Creating new profile", clientId);
 
@@ -243,7 +249,11 @@ namespace Service.ClientProfile.Services
             {
                 ClientId = clientId,
                 Status2FA = Status2FA.NotSet,
-                Blockers = new List<Blocker>()
+                Blockers = new List<Blocker>(),
+                EmailConfirmed = false,
+                PhoneConfirmed = false,
+                KYCPassed = false,
+                ReferralCode = await GenerateReferralCode(),
             };
             
             await context.ClientProfiles.AddAsync(profile);
@@ -252,6 +262,30 @@ namespace Service.ClientProfile.Services
 
             return profile;
         }
+
+        private async Task<string> AddReferralCodeToExistingUser(Domain.Models.ClientProfile profile)
+        {            
+            _logger.LogInformation("Generating Referral code for clientId {clientId}", profile.ClientId);
+
+            var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var referralCode = await GenerateReferralCode();
+            profile.ReferralCode = referralCode;
+            
+            await context.UpsertAsync(profile);
+            await _cache.AddOrUpdateClientProfile(profile);
+
+            await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+            {
+                OldProfile = oldProfile,
+                NewProfile = profile
+            });
+            
+            return referralCode;
+        }
+
+        private async Task<string> GenerateReferralCode() => Guid.NewGuid().ToString("N");
 
         public async Task<ClientProfileUpdateResponse> UpdateConfirmStatuses(string clientId, bool phoneConfirmed, bool emailConfirmed)
         {
