@@ -45,8 +45,7 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.KYCPassed).HasDefaultValue(false);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ReferralCode).HasMaxLength(128);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ReferrerClientId).HasMaxLength(128);
-
-            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.LastChangeTimestamp);
+            
             
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferrerClientId);
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferralCode);

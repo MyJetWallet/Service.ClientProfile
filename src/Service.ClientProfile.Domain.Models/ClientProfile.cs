@@ -16,7 +16,7 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 6)] public bool KYCPassed { get; set; }
         [DataMember(Order = 7)] public string ReferralCode { get; set; }
         [DataMember(Order = 8)] public string ReferrerClientId { get; set; }
-        [DataMember(Order = 9)] public DateTime LastChangeTimestamp { get; set; }
+        [DataMember(Order = 9)] public DateTime LastTs { get; set; }
 
         public object Clone()
         {

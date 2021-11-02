@@ -52,8 +52,7 @@ namespace Service.ClientProfile.Services
                     BlockedOperationType = request.Type,
                     ExpiryTime = request.ExpiryTime
                 });
-                profile.LastChangeTimestamp = DateTime.UtcNow;
-
+                
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
@@ -101,8 +100,7 @@ namespace Service.ClientProfile.Services
                     };
                 
                 profile.Blockers.Remove(blocker);
-                profile.LastChangeTimestamp = DateTime.UtcNow;
-
+                
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 context.Blockers.Remove(blocker);
                 context.ClientProfiles.Update(profile);
@@ -142,7 +140,7 @@ namespace Service.ClientProfile.Services
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
 
                 profile.Status2FA = Status2FA.Enabled;
-                profile.LastChangeTimestamp = DateTime.UtcNow;
+                
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
@@ -182,7 +180,7 @@ namespace Service.ClientProfile.Services
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
            
                 profile.Status2FA = Status2FA.Disabled; 
-                profile.LastChangeTimestamp = DateTime.UtcNow;
+                
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
@@ -257,8 +255,8 @@ namespace Service.ClientProfile.Services
                 EmailConfirmed = false,
                 PhoneConfirmed = false,
                 KYCPassed = false,
-                ReferralCode = await GenerateReferralCode(),
-                LastChangeTimestamp = DateTime.UtcNow
+                ReferralCode = await GenerateReferralCode()
+                
             };
             
             await context.ClientProfiles.AddAsync(profile);
@@ -277,7 +275,7 @@ namespace Service.ClientProfile.Services
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var referralCode = await GenerateReferralCode();
             profile.ReferralCode = referralCode;
-            profile.LastChangeTimestamp = DateTime.UtcNow;
+            
 
             await context.UpsertAsync(profile);
             await _cache.AddOrUpdateClientProfile(profile);
@@ -304,7 +302,7 @@ namespace Service.ClientProfile.Services
            
                 profile.EmailConfirmed = emailConfirmed;
                 profile.PhoneConfirmed = phoneConfirmed;
-                profile.LastChangeTimestamp = DateTime.UtcNow;
+                
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
@@ -344,7 +342,7 @@ namespace Service.ClientProfile.Services
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
            
                 profile.KYCPassed = true; 
-                profile.LastChangeTimestamp = DateTime.UtcNow;
+                
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
@@ -419,7 +417,7 @@ namespace Service.ClientProfile.Services
                 }
 
                 profile.ReferrerClientId = referrer.ClientId;
-                profile.LastChangeTimestamp = DateTime.UtcNow;
+                
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
