@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Service.ClientProfile.Domain.Models;
 
@@ -42,6 +44,12 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.Status2FA).HasDefaultValue(Status2FA.NotSet);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.KYCPassed).HasDefaultValue(false);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ReferralCode).HasMaxLength(128);
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ReferrerClientId).HasMaxLength(128);
+
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.LastChangeTimestamp);
+            
+            modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferrerClientId);
+            modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferralCode);
 
             modelBuilder.Entity<Blocker>().ToTable(BlockerTableName);
             modelBuilder.Entity<Blocker>().HasKey(e => e.BlockerId);
@@ -51,7 +59,16 @@ namespace Service.ClientProfile.Postgres
 
         public async Task<int> UpsertAsync(IEnumerable<Domain.Models.ClientProfile> entities)
         {
-            var result = await ClientProfiles.UpsertRange(entities).WhenMatched((oldEntity, newEntity) => newEntity).AllowIdentityMatch().RunAsync();
+            var result = await ClientProfiles.UpsertRange(entities).WhenMatched((oldEntity, newEntity) => new Domain.Models.ClientProfile
+            {
+                ClientId = newEntity.ClientId,
+                Status2FA = newEntity.Status2FA,
+                EmailConfirmed = newEntity.EmailConfirmed,
+                PhoneConfirmed = newEntity.PhoneConfirmed,
+                KYCPassed = newEntity.KYCPassed,
+                ReferralCode = newEntity.ReferralCode,
+                ReferrerClientId = newEntity.ReferrerClientId
+            }).RunAsync();
             return result;
         }
         

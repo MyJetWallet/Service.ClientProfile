@@ -32,5 +32,11 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<ClientByReferralResponse> GetProfileByReferralCode(GetProfileByReferralCodeRequest request);
+        
+        [OperationContract]
+        Task<GetAllClientProfilesResponse> GetReferrals(GetReferralsRequest request);
+        
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> AddReferral(AddReferralRequest request);
     }
 }

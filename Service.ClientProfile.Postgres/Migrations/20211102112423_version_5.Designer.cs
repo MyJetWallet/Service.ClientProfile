@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Service.ClientProfile.Postgres;
@@ -9,9 +10,10 @@ using Service.ClientProfile.Postgres;
 namespace Service.ClientProfile.Postgres.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20211102112423_version_5")]
+    partial class version_5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,8 +64,7 @@ namespace Service.ClientProfile.Postgres.Migrations
 
                     b.Property<DateTime>("LastChangeTimestamp")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp without time zone")
-                        .HasDefaultValueSql("current_timestamp");
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<bool>("PhoneConfirmed")
                         .HasColumnType("boolean");
