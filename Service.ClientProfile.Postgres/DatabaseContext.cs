@@ -50,9 +50,12 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferrerClientId);
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferralCode);
 
+            modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.LastTs);
+
             modelBuilder.Entity<Blocker>().ToTable(BlockerTableName);
             modelBuilder.Entity<Blocker>().HasKey(e => e.BlockerId);
             modelBuilder.Entity<Blocker>().Property(e => e.BlockerId).UseIdentityColumn();
+            modelBuilder.Entity<Blocker>().HasIndex(e => e.LastTs);
             base.OnModelCreating(modelBuilder);
         }
 
