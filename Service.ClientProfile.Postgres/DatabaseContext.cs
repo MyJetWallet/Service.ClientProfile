@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.Postgres;
 using Service.ClientProfile.Domain.Models;
 
 namespace Service.ClientProfile.Postgres
 {
-    public class DatabaseContext : DbContext
+    public class DatabaseContext : MyDbContext
     {
         public const string Schema = "clientprofiles";
 
@@ -21,16 +21,7 @@ namespace Service.ClientProfile.Postgres
         public DatabaseContext(DbContextOptions options) : base(options)
         {
         }
-
-        public static ILoggerFactory LoggerFactory { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (LoggerFactory != null)
-            {
-                optionsBuilder.UseLoggerFactory(LoggerFactory).EnableSensitiveDataLogging();
-            }
-        }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
