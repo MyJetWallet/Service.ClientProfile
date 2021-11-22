@@ -34,5 +34,7 @@ namespace Service.ClientProfile.Services
         public async Task<GetAllClientProfilesResponse> GetReferrals(GetReferralsRequest request)  => await _clientProfileService.GetReferrals(request.ClientId);
 
         public async Task<ClientProfileUpdateResponse> AddReferral(AddReferralRequest request) => await _clientProfileService.AddReferral(request);
+
+        public async Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request) => await _clientProfileService.ChangeReferralCode(request);
     }
 }

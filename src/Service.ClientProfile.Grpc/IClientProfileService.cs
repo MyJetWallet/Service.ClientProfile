@@ -38,5 +38,8 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<ClientProfileUpdateResponse> AddReferral(AddReferralRequest request);
+
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request);
     }
 }
