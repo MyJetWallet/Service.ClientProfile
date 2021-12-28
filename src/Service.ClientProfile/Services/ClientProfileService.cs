@@ -2,14 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DotNetCoreDecorators;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.ServiceBus;
-using MyNoSqlServer.Abstractions;
 using Service.ClientProfile.Domain.Models;
-using Service.ClientProfile.Domain.Models.NoSql;
-using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
 using Service.ClientProfile.Postgres;
@@ -255,7 +251,7 @@ namespace Service.ClientProfile.Services
                 EmailConfirmed = false,
                 PhoneConfirmed = false,
                 KYCPassed = false,
-                ReferralCode = await GenerateReferralCode()
+                ReferralCode = await GenerateReferralCode(context, clientId)
                 
             };
             
@@ -273,7 +269,7 @@ namespace Service.ClientProfile.Services
             var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
 
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-            var referralCode = await GenerateReferralCode();
+            var referralCode = await GenerateReferralCode(context, profile.ClientId);
             profile.ReferralCode = referralCode;
             
 
@@ -289,7 +285,55 @@ namespace Service.ClientProfile.Services
             return referralCode;
         }
 
-        private async Task<string> GenerateReferralCode() => Guid.NewGuid().ToString("N");
+        private async Task<string> GenerateReferralCode(DatabaseContext ctx, string clientId)
+        {
+            var codes = new List<string>();
+
+            var str = clientId.Replace("-", "").ToUpper();
+            for (int i = 0; i < 24; i++)
+            {
+                codes.Add(str.Substring(i, 6));
+            }
+
+            var existsClients = await ctx.ClientProfiles
+                .Where(e => codes.Contains(e.ReferralCode))
+                .Select(e => e.ReferralCode)
+                .ToListAsync();
+
+            codes = codes.Where(e => !existsClients.Contains(e)).ToList();
+
+            if (codes.Any())
+                return codes.First();
+
+            var countIterations = 0;
+            while (countIterations < 10)
+            {
+
+
+                for (int k = 0; k < 3; k++)
+                {
+                    str = Guid.NewGuid().ToString("N").Replace("-", "").ToUpper();
+                    for (int i = 0; i < 24; i++)
+                    {
+                        codes.Add(str.Substring(i, 6));
+                    }
+                }
+
+                existsClients = await ctx.ClientProfiles
+                    .Where(e => codes.Contains(e.ReferralCode))
+                    .Select(e => e.ReferralCode)
+                    .ToListAsync();
+
+                codes = codes.Where(e => !existsClients.Contains(e)).ToList();
+
+                if (codes.Any())
+                    return codes.First();
+
+                countIterations++;
+            }
+
+            throw new Exception($"Cannot generate Referrer Code for client {clientId}");
+        }
 
         public async Task<ClientProfileUpdateResponse> UpdateConfirmStatuses(string clientId, bool phoneConfirmed, bool emailConfirmed)
         {
