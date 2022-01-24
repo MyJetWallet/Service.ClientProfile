@@ -290,7 +290,7 @@ namespace Service.ClientProfile.Services
             var codes = new List<string>();
 
             var str = clientId.Replace("-", "").ToUpper();
-            for (int i = 0; i < 24; i++)
+            for (int i = 0; i < str.Length-6; i++)
             {
                 codes.Add(str.Substring(i, 6));
             }
@@ -308,12 +308,10 @@ namespace Service.ClientProfile.Services
             var countIterations = 0;
             while (countIterations < 10)
             {
-
-
                 for (int k = 0; k < 3; k++)
                 {
                     str = Guid.NewGuid().ToString("N").Replace("-", "").ToUpper();
-                    for (int i = 0; i < 24; i++)
+                    for (int i = 0; i < str.Length-6; i++)
                     {
                         codes.Add(str.Substring(i, 6));
                     }

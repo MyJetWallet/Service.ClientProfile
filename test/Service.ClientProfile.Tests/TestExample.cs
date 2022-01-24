@@ -13,7 +13,12 @@ namespace Service.ClientProfile.Tests
         [Test]
         public void Test1()
         {
-            Console.WriteLine("Debug output");
+            var str = Guid.NewGuid().ToString("N").Replace("-", "").ToUpper();
+            str = "SP-BrokerFee";
+            for (int i = 0; i < str.Length-6; i++)
+            {
+                Console.WriteLine($"{i}: {str.Substring(i, 6)}");
+            }
             Assert.Pass();
         }
     }
