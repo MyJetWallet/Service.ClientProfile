@@ -238,6 +238,10 @@ namespace Service.ClientProfile.Services
                 {
                     clientProfile.ReferralCode = await AddReferralCodeToExistingUser(clientProfile);
                 }
+                if (string.IsNullOrEmpty(clientProfile.ClientIdHash))
+                {
+                    clientProfile.ClientIdHash = GetStringSha256Hash(clientId);
+                }
                 return clientProfile;
             }
 
@@ -251,8 +255,8 @@ namespace Service.ClientProfile.Services
                 EmailConfirmed = false,
                 PhoneConfirmed = false,
                 KYCPassed = false,
-                ReferralCode = await GenerateReferralCode(context, clientId)
-                
+                ReferralCode = await GenerateReferralCode(context, clientId),
+                ClientIdHash = GetStringSha256Hash(clientId)
             };
             
             await context.ClientProfiles.AddAsync(profile);
@@ -260,8 +264,20 @@ namespace Service.ClientProfile.Services
             await _cache.AddOrUpdateClientProfile(profile);
 
             return profile;
-        }
+            
+            //locals
+            static string GetStringSha256Hash(string text)
+            {
+                if (String.IsNullOrEmpty(text))
+                    return String.Empty;
 
+                using var sha = System.Security.Cryptography.SHA256.Create();
+                byte[] textData = System.Text.Encoding.UTF8.GetBytes(text);
+                byte[] hash = sha.ComputeHash(textData);
+                return BitConverter.ToString(hash).Replace("-", String.Empty);
+            }
+        }
+        
         private async Task<string> AddReferralCodeToExistingUser(Domain.Models.ClientProfile profile)
         {            
             _logger.LogInformation("Generating Referral code for clientId {clientId}", profile.ClientId);
