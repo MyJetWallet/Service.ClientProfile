@@ -17,7 +17,7 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 7)] public string ReferralCode { get; set; }
         [DataMember(Order = 8)] public string ReferrerClientId { get; set; }
         [DataMember(Order = 9)] public DateTime LastTs { get; set; }
-        [DataMember(Order = 10)] public string ClientIdHash { get; set; }
+        [DataMember(Order = 10)] public string ExternalClientId { get; set; }
 
 
         public object Clone()

@@ -238,9 +238,9 @@ namespace Service.ClientProfile.Services
                 {
                     clientProfile.ReferralCode = await AddReferralCodeToExistingUser(clientProfile);
                 }
-                if (string.IsNullOrEmpty(clientProfile.ClientIdHash))
+                if (string.IsNullOrEmpty(clientProfile.ExternalClientId))
                 {
-                    clientProfile.ClientIdHash = GetStringSha256Hash(clientId);
+                    clientProfile.ExternalClientId = GetStringSha256Hash(clientId);
                 }
                 return clientProfile;
             }
@@ -256,7 +256,7 @@ namespace Service.ClientProfile.Services
                 PhoneConfirmed = false,
                 KYCPassed = false,
                 ReferralCode = await GenerateReferralCode(context, clientId),
-                ClientIdHash = GetStringSha256Hash(clientId)
+                ExternalClientId = GetStringSha256Hash(clientId)
             };
             
             await context.ClientProfiles.AddAsync(profile);
@@ -564,6 +564,14 @@ namespace Service.ClientProfile.Services
                     Error = e.Message
                 };
             }
+        }
+
+        public async Task<Domain.Models.ClientProfile> GetProfileByExternalId(string externalId)
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            return context.ClientProfiles
+                .Include(t=>t.Blockers)
+                .FirstOrDefault(t => t.ExternalClientId == externalId);
         }
     }
 }
