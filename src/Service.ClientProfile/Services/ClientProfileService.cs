@@ -9,6 +9,8 @@ using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
 using Service.ClientProfile.Postgres;
+using Service.PersonalData.Grpc;
+using Service.PersonalData.Grpc.Contracts;
 
 namespace Service.ClientProfile.Services
 {
@@ -18,13 +20,16 @@ namespace Service.ClientProfile.Services
         private readonly IServiceBusPublisher<ClientProfileUpdateMessage> _publisher;
         private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
         private readonly ProfileCacheManager _cache;
+        private readonly IPersonalDataServiceGrpc _personalDataService;
 
-        public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache)
+
+        public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache, IPersonalDataServiceGrpc personalDataService)
         {
             _publisher = publisher;
             _logger = logger;
             _dbContextOptionsBuilder = dbContextOptionsBuilder;
             _cache = cache;
+            _personalDataService = personalDataService;
         }
 
         public async Task<ClientProfileUpdateResponse> AddBlockerToClient(AddBlockerToClientRequest request)
@@ -240,7 +245,7 @@ namespace Service.ClientProfile.Services
                 }
                 if (string.IsNullOrEmpty(clientProfile.ExternalClientId))
                 {
-                    clientProfile.ExternalClientId = GetStringSha256Hash(clientId);
+                    clientProfile.ExternalClientId = await GenerateExternalClientId(clientId);
                 }
                 return clientProfile;
             }
@@ -256,7 +261,7 @@ namespace Service.ClientProfile.Services
                 PhoneConfirmed = false,
                 KYCPassed = false,
                 ReferralCode = await GenerateReferralCode(context, clientId),
-                ExternalClientId = GetStringSha256Hash(clientId)
+                ExternalClientId = await GenerateExternalClientId(clientId)
             };
             
             await context.ClientProfiles.AddAsync(profile);
@@ -265,17 +270,25 @@ namespace Service.ClientProfile.Services
 
             return profile;
             
-            //locals
-            static string GetStringSha256Hash(string text)
-            {
-                if (String.IsNullOrEmpty(text))
-                    return String.Empty;
+        }
+        
+        private async Task<string> GenerateExternalClientId(string clientId)
+        {
+            if (String.IsNullOrEmpty(clientId))
+                return String.Empty;
 
-                using var sha = System.Security.Cryptography.SHA256.Create();
-                byte[] textData = System.Text.Encoding.UTF8.GetBytes(text);
-                byte[] hash = sha.ComputeHash(textData);
-                return BitConverter.ToString(hash).Replace("-", String.Empty);
-            }
+            var pd = await _personalDataService.GetByIdAsync(new GetByIdRequest()
+            {
+                Id = clientId
+            });
+            
+            if(pd.PersonalData == null)
+                return String.Empty;
+
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            byte[] textData = System.Text.Encoding.UTF8.GetBytes(pd.PersonalData.Email);
+            byte[] hash = sha.ComputeHash(textData);
+            return BitConverter.ToString(hash).Replace("-", String.Empty);
         }
         
         private async Task<string> AddReferralCodeToExistingUser(Domain.Models.ClientProfile profile)
