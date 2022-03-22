@@ -38,6 +38,6 @@ namespace Service.ClientProfile.Services
         public async Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request) => await _clientProfileService.ChangeReferralCode(request);
 
         public async Task<Domain.Models.ClientProfile> GetProfileByExternalId(GetClientByExternalIdRequest request) =>
-            await _clientProfileService.GetProfileByExternalId(request.ExternalClientId);
+            await _clientProfileService.GetProfileByExternalId(request.SearchText);
     }
 }

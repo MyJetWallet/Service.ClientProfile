@@ -584,7 +584,7 @@ namespace Service.ClientProfile.Services
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             return context.ClientProfiles
                 .Include(t=>t.Blockers)
-                .FirstOrDefault(t => t.ExternalClientId == externalId);
+                .FirstOrDefault(t => t.ExternalClientId.Contains(externalId));
         }
     }
 }
