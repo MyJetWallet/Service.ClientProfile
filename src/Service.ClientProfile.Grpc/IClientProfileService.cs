@@ -43,6 +43,6 @@ namespace Service.ClientProfile.Grpc
         Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request);
         
         [OperationContract]
-        Task<Domain.Models.ClientProfile> GetProfileByExternalId(GetClientByExternalIdRequest request);
+        Task<GetAllClientProfilesResponse> GetProfileByExternalId(GetClientByExternalIdRequest request);
     }
 }

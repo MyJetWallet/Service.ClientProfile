@@ -245,7 +245,7 @@ namespace Service.ClientProfile.Services
                 }
                 if (string.IsNullOrEmpty(clientProfile.ExternalClientId))
                 {
-                    clientProfile.ExternalClientId = await GenerateExternalClientId(clientId);
+                    clientProfile.ExternalClientId = await AddExternalClientIdToExistingUser(clientProfile);
                 }
                 return clientProfile;
             }
@@ -291,6 +291,28 @@ namespace Service.ClientProfile.Services
             return BitConverter.ToString(hash).Replace("-", String.Empty);
         }
         
+        private async Task<string> AddExternalClientIdToExistingUser(Domain.Models.ClientProfile profile)
+        {            
+            _logger.LogInformation("Generating external client id for {clientId}", profile.ClientId);
+
+            var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var externalClientId = await GenerateExternalClientId(profile.ClientId);
+            profile.ExternalClientId = externalClientId;
+
+            await context.UpsertAsync(profile);
+            await _cache.AddOrUpdateClientProfile(profile);
+
+            await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+            {
+                OldProfile = oldProfile,
+                NewProfile = profile
+            });
+            
+            return externalClientId;
+        }
+        
         private async Task<string> AddReferralCodeToExistingUser(Domain.Models.ClientProfile profile)
         {            
             _logger.LogInformation("Generating Referral code for clientId {clientId}", profile.ClientId);
@@ -300,7 +322,6 @@ namespace Service.ClientProfile.Services
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var referralCode = await GenerateReferralCode(context, profile.ClientId);
             profile.ReferralCode = referralCode;
-            
 
             await context.UpsertAsync(profile);
             await _cache.AddOrUpdateClientProfile(profile);
@@ -579,12 +600,15 @@ namespace Service.ClientProfile.Services
             }
         }
 
-        public async Task<Domain.Models.ClientProfile> GetProfileByExternalId(string externalId)
+        public async Task<GetAllClientProfilesResponse> GetProfileByExternalId(string externalId)
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-            return context.ClientProfiles
-                .Include(t=>t.Blockers)
-                .FirstOrDefault(t => t.ExternalClientId.Contains(externalId));
+            var list = context.ClientProfiles
+                .Where(t => t.ExternalClientId.Contains(externalId)).ToList();
+            return new GetAllClientProfilesResponse()
+            {
+                ClientProfiles = list
+            };
         }
     }
 }

@@ -57,6 +57,7 @@ namespace Service.ClientProfile.Client
         public async Task<ClientProfileUpdateResponse> AddReferral(AddReferralRequest request) => await _grpcService.AddReferral(request);
         
         public async Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request) => await _grpcService.ChangeReferralCode(request);
-        public async Task<Domain.Models.ClientProfile> GetProfileByExternalId(GetClientByExternalIdRequest request) => await _grpcService.GetProfileByExternalId(request);
+        
+        public async Task<GetAllClientProfilesResponse> GetProfileByExternalId(GetClientByExternalIdRequest request) => await _grpcService.GetProfileByExternalId(request);
     }
 }
