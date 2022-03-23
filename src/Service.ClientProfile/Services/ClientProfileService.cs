@@ -510,10 +510,8 @@ namespace Service.ClientProfile.Services
 
                 profile.ReferrerClientId = referrer.ClientId;
                 
-
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
