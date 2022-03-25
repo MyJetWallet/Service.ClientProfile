@@ -60,6 +60,8 @@ namespace Service.ClientProfile.Services
                         Error = "Client not found in db"
                     };
                 }
+
+                dbProfile.Blockers ??= new List<Blocker>();
                 
                 dbProfile.Blockers.Add(new Blocker
                 {
@@ -70,7 +72,7 @@ namespace Service.ClientProfile.Services
                 });
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
-                
+                profile = dbProfile;
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
                 {
                     OldProfile = oldProfile,
