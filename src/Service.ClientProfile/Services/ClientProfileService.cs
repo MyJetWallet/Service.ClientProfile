@@ -47,16 +47,27 @@ namespace Service.ClientProfile.Services
                 
                 var profile = await GetOrCreateProfile(request.ClientId);
                 var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-                profile.Blockers.Add(new Blocker()
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+
+                var dbProfile = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == profile.ClientId);
+                if (dbProfile == null)
+                {
+                    return new ClientProfileUpdateResponse()
+                    {
+                        IsSuccess = false,
+                        ClientId = request.ClientId,
+                        Error = "Client not found in db"
+                    };
+                }
+                
+                dbProfile.Blockers.Add(new Blocker
                 {
                     Reason = request.BlockerReason,
                     BlockedOperationType = request.Type,
                     ExpiryTime = request.ExpiryTime,
                     Profile = profile
                 });
-                
-                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
-                await context.UpsertAsync(profile);
                 await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
                 
