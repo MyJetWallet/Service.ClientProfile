@@ -51,7 +51,8 @@ namespace Service.ClientProfile.Services
                 {
                     Reason = request.BlockerReason,
                     BlockedOperationType = request.Type,
-                    ExpiryTime = request.ExpiryTime
+                    ExpiryTime = request.ExpiryTime,
+                    Profile = profile
                 });
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
