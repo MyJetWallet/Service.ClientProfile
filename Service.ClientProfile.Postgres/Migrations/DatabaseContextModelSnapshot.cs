@@ -81,6 +81,9 @@ namespace Service.ClientProfile.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValue(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc));
 
+                    b.Property<bool>("MarketingEmailAllowed")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("PhoneConfirmed")
                         .HasColumnType("boolean");
 

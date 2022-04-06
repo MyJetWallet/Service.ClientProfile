@@ -44,5 +44,8 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<GetAllClientProfilesResponse> GetProfileByExternalId(GetClientByExternalIdRequest request);
+        
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request);
     }
 }

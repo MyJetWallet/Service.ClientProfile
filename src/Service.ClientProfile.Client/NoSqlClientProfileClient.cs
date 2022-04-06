@@ -59,5 +59,7 @@ namespace Service.ClientProfile.Client
         public async Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request) => await _grpcService.ChangeReferralCode(request);
         
         public async Task<GetAllClientProfilesResponse> GetProfileByExternalId(GetClientByExternalIdRequest request) => await _grpcService.GetProfileByExternalId(request);
+
+        public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request) => await _grpcService.SetMarketingEmailSettings(request);
     }
 }
