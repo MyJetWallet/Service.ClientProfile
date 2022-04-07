@@ -156,10 +156,8 @@ namespace Service.ClientProfile.Services
 
                 profile.Status2FA = Status2FA.Enabled;
                 
-
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
@@ -196,10 +194,8 @@ namespace Service.ClientProfile.Services
            
                 profile.Status2FA = Status2FA.Disabled; 
                 
-                
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
@@ -277,9 +273,8 @@ namespace Service.ClientProfile.Services
                 ReferralCode = await GenerateReferralCode(context, clientId),
                 ExternalClientId = await GenerateExternalClientId(clientId)
             };
-            
-            await context.ClientProfiles.AddAsync(profile);
-            await context.SaveChangesAsync();
+
+            await context.UpsertAsync(profile);
             await _cache.AddOrUpdateClientProfile(profile);
 
             return profile;
@@ -409,10 +404,8 @@ namespace Service.ClientProfile.Services
                 profile.EmailConfirmed = emailConfirmed;
                 profile.PhoneConfirmed = phoneConfirmed;
                 
-
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
@@ -449,10 +442,8 @@ namespace Service.ClientProfile.Services
            
                 profile.KYCPassed = true; 
                 
-
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
@@ -635,7 +626,6 @@ namespace Service.ClientProfile.Services
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
-                await context.SaveChangesAsync();
                 await _cache.AddOrUpdateClientProfile(profile);
 
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
