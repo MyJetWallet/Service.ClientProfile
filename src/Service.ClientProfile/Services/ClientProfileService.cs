@@ -38,7 +38,7 @@ namespace Service.ClientProfile.Services
             try
             {
                 if (request.ExpiryTime < DateTime.UtcNow)
-                    return new ClientProfileUpdateResponse()
+                    return new ClientProfileUpdateResponse
                     {
                         IsSuccess = false,
                         ClientId = request.ClientId,
@@ -53,7 +53,7 @@ namespace Service.ClientProfile.Services
                 var dbProfile = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == profile.ClientId);
                 if (dbProfile == null)
                 {
-                    return new ClientProfileUpdateResponse()
+                    return new ClientProfileUpdateResponse
                     {
                         IsSuccess = false,
                         ClientId = request.ClientId,
@@ -71,8 +71,10 @@ namespace Service.ClientProfile.Services
                     Profile = profile
                 });
                 await context.SaveChangesAsync();
-                await _cache.AddOrUpdateClientProfile(profile);
+                await _cache.AddOrUpdateClientProfile(dbProfile);
+                
                 profile = dbProfile;
+                
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
                 {
                     OldProfile = oldProfile,
@@ -84,6 +86,7 @@ namespace Service.ClientProfile.Services
                     IsSuccess = true,
                     ClientId = request.ClientId
                 };
+                
             }
             catch (Exception e)
             {
