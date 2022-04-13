@@ -70,16 +70,16 @@ namespace Service.ClientProfile.Services
                     Profile = profile
                 });
                 await context.SaveChangesAsync();
-                await _cache.AddOrUpdateClientProfile(dbProfile);
-                
-                profile = dbProfile;
-                
+
                 await _publisher.PublishAsync(new ClientProfileUpdateMessage()
                 {
                     OldProfile = oldProfile,
                     NewProfile = profile
                 });
 
+                var profileToSync = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == profile.ClientId);
+                await _cache.AddOrUpdateClientProfile(profileToSync);
+                
                 return new ClientProfileUpdateResponse()
                 {
                     IsSuccess = true,
