@@ -22,7 +22,6 @@ namespace Service.ClientProfile.Services
         private readonly ProfileCacheManager _cache;
         private readonly IPersonalDataServiceGrpc _personalDataService;
 
-
         public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache, IPersonalDataServiceGrpc personalDataService)
         {
             _publisher = publisher;

@@ -1,3 +1,4 @@
+
 using MyNoSqlServer.Abstractions;
 
 namespace Service.ClientProfile.Domain.Models.NoSql
