@@ -71,21 +71,23 @@ namespace Service.ClientProfile.Services
                 });
                 await context.SaveChangesAsync();
 
-                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage
                 {
                     OldProfile = oldProfile,
                     NewProfile = profile
                 });
-
-                var profileToSync = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == profile.ClientId);
-                await _cache.AddOrUpdateClientProfile(profileToSync);
                 
-                return new ClientProfileUpdateResponse()
+                var profileAfterSave = await context.ClientProfiles
+                    .FirstOrDefaultAsync(itm => itm.ClientId == profile.ClientId);
+                
+                if (profileAfterSave != null)
+                    await _cache.AddOrUpdateClientProfile(profileAfterSave);
+                
+                return new ClientProfileUpdateResponse
                 {
                     IsSuccess = true,
                     ClientId = request.ClientId
                 };
-                
             }
             catch (Exception e)
             {
