@@ -49,7 +49,7 @@ namespace Service.ClientProfile.Services
                 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
-                var dbProfile = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == profile.ClientId);
+                var dbProfile = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == request.ClientId);
                 if (dbProfile == null)
                 {
                     return new ClientProfileUpdateResponse
@@ -78,7 +78,7 @@ namespace Service.ClientProfile.Services
                 });
                 
                 var profileAfterSave = await context.ClientProfiles
-                    .FirstOrDefaultAsync(itm => itm.ClientId == profile.ClientId);
+                    .FirstOrDefaultAsync(itm => itm.ClientId == request.ClientId);
                 
                 if (profileAfterSave != null)
                     await _cache.AddOrUpdateClientProfile(profileAfterSave);
