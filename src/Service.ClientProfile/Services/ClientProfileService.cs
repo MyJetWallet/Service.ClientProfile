@@ -76,13 +76,25 @@ namespace Service.ClientProfile.Services
                     OldProfile = oldProfile,
                     NewProfile = profile
                 });
+
+
+                var clientBlockers = 
+                    context.Blockers.Where(itm => itm.Profile.ClientId == request.ClientId).ToList();
                 
                 var profileAfterSave = await context.ClientProfiles
                     .FirstOrDefaultAsync(itm => itm.ClientId == request.ClientId);
                 
-                if (profileAfterSave != null)
-                    await _cache.AddOrUpdateClientProfile(profileAfterSave);
+                if (profileAfterSave == null)
+                    return new ClientProfileUpdateResponse
+                    {
+                        IsSuccess = true,
+                        ClientId = request.ClientId
+                    };
                 
+                
+                profileAfterSave.Blockers = clientBlockers;
+                await _cache.AddOrUpdateClientProfile(profileAfterSave);
+
                 return new ClientProfileUpdateResponse
                 {
                     IsSuccess = true,
