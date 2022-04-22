@@ -31,6 +31,21 @@ namespace Service.ClientProfile.Services
             _personalDataService = personalDataService;
         }
 
+        public async IAsyncEnumerable<Blocker> GetClientProfileBlockers()
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+
+            var clientBlockers =  context.Blockers
+                .Include(t => t.Profile)
+                .Where(itm => itm.ExpiryTime > DateTime.UtcNow)
+                .AsAsyncEnumerable();
+
+            await foreach (var blocker in clientBlockers)
+            {
+                yield return blocker;
+            }
+        }
+
         public async Task<ClientProfileUpdateResponse> AddBlockerToClient(AddBlockerToClientRequest request)
         {
             _logger.LogInformation("Adding blocker for clientId {clientId}, type {type}, reason {reason}, expiry time {expiryTime}", request.ClientId, request.Type.ToString(), request.BlockerReason, request.ExpiryTime);
