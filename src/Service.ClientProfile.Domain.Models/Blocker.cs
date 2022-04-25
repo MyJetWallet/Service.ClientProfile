@@ -11,7 +11,6 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 3)] public DateTime ExpiryTime { get; set; }
         [DataMember(Order = 4)] public string Reason { get; set; }
         [DataMember(Order = 5)] public DateTime LastTs { get; set; }
-        [DataMember(Order = 6)] public string ClientId { get; set; }
         public ClientProfile Profile { get; set; }
 
         public object Clone()

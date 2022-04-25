@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MyNoSqlServer.DataReader;
-using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Domain.Models.NoSql;
 using Service.ClientProfile.Grpc;
+using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
 
@@ -49,7 +49,7 @@ namespace Service.ClientProfile.Client
             };
         }
 
-        public IAsyncEnumerable<Blocker> GetClientBlockers() => _grpcService.GetClientBlockers();
+        public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers() => _grpcService.GetClientBlockers();
 
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) => await _grpcService.SetKYCPassed(request);
         

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.ServiceBus;
 using Service.ClientProfile.Domain.Models;
+using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
 using Service.ClientProfile.Postgres;
@@ -31,7 +32,7 @@ namespace Service.ClientProfile.Services
             _personalDataService = personalDataService;
         }
 
-        public async IAsyncEnumerable<Blocker> GetClientProfileBlockers()
+        public async IAsyncEnumerable<BlockerGrpcModel> GetClientProfileBlockers()
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
@@ -42,8 +43,15 @@ namespace Service.ClientProfile.Services
 
             await foreach (var blocker in clientBlockers)
             {
-                blocker.ClientId = blocker?.Profile?.ClientId;
-                yield return blocker;
+                yield return new BlockerGrpcModel
+                {
+                    BlockerId = blocker.BlockerId,
+                    BlockedOperationType = blocker.BlockedOperationType,
+                    ExpiryTime = blocker.ExpiryTime,
+                    Reason = blocker.Reason,
+                    LastTs = blocker.LastTs,
+                    ClientId = blocker?.Profile?.ClientId,
+                };
             }
         }
 

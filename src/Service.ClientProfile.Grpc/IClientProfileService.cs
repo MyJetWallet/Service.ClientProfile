@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using Service.ClientProfile.Domain.Models;
+using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
 
@@ -29,7 +30,7 @@ namespace Service.ClientProfile.Grpc
         Task<GetAllClientProfilesResponse> GetAllProfiles();
         
         [OperationContract]
-        IAsyncEnumerable<Blocker> GetClientBlockers();
+        IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers();
         
         [OperationContract]
         Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request);
