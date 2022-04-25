@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Grpc.Models.Responses;
