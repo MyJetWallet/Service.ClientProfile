@@ -42,7 +42,7 @@ namespace Service.ClientProfile.Services
 
             await foreach (var blocker in clientBlockers)
             {
-                blocker.ClientId = blocker.Profile.ClientId;
+                blocker.ClientId = blocker?.Profile?.ClientId;
                 yield return blocker;
             }
         }
