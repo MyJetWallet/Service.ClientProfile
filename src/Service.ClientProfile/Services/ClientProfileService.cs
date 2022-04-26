@@ -8,6 +8,7 @@ using MyJetWallet.Sdk.ServiceBus;
 using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
+using Service.ClientProfile.Grpc.Models.Requests.Blockers;
 using Service.ClientProfile.Grpc.Models.Responses;
 using Service.ClientProfile.Postgres;
 using Service.PersonalData.Grpc;
@@ -23,7 +24,9 @@ namespace Service.ClientProfile.Services
         private readonly ProfileCacheManager _cache;
         private readonly IPersonalDataServiceGrpc _personalDataService;
 
-        public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache, IPersonalDataServiceGrpc personalDataService)
+        public ClientProfileService(IServiceBusPublisher<ClientProfileUpdateMessage> publisher,
+            ILogger<ClientProfileServiceGrpc> logger, DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder,
+            ProfileCacheManager cache, IPersonalDataServiceGrpc personalDataService)
         {
             _publisher = publisher;
             _logger = logger;
@@ -32,16 +35,21 @@ namespace Service.ClientProfile.Services
             _personalDataService = personalDataService;
         }
 
-        public async IAsyncEnumerable<BlockerGrpcModel> GetClientProfileBlockers()
+        public async IAsyncEnumerable<BlockerGrpcModel> GetClientProfileBlockers(
+            GetClientProfileBlockersRequest request)
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
-            var clientBlockers =  context.Blockers
+            var clientBlockers = context.Blockers
                 .Include(t => t.Profile)
-                .Where(itm => itm.ExpiryTime > DateTime.UtcNow)
-                .AsAsyncEnumerable();
+                .Where(itm => itm.ExpiryTime > DateTime.UtcNow);
 
-            await foreach (var blocker in clientBlockers)
+            if (request.Type != null)
+            {
+                clientBlockers = clientBlockers.Where(itm => itm.BlockedOperationType == request.Type);
+            }
+
+            await foreach (var blocker in clientBlockers.AsAsyncEnumerable())
             {
                 yield return new BlockerGrpcModel
                 {
@@ -57,7 +65,9 @@ namespace Service.ClientProfile.Services
 
         public async Task<ClientProfileUpdateResponse> AddBlockerToClient(AddBlockerToClientRequest request)
         {
-            _logger.LogInformation("Adding blocker for clientId {clientId}, type {type}, reason {reason}, expiry time {expiryTime}", request.ClientId, request.Type.ToString(), request.BlockerReason, request.ExpiryTime);
+            _logger.LogInformation(
+                "Adding blocker for clientId {clientId}, type {type}, reason {reason}, expiry time {expiryTime}",
+                request.ClientId, request.Type.ToString(), request.BlockerReason, request.ExpiryTime);
             try
             {
                 if (request.ExpiryTime < DateTime.UtcNow)
@@ -67,10 +77,10 @@ namespace Service.ClientProfile.Services
                         ClientId = request.ClientId,
                         Error = "Blocker expiry time already passed"
                     };
-                
+
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-                
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
 
                 var dbProfile = context.ClientProfiles.FirstOrDefault(itm => itm.ClientId == request.ClientId);
@@ -85,7 +95,7 @@ namespace Service.ClientProfile.Services
                 }
 
                 dbProfile.Blockers ??= new List<Blocker>();
-                
+
                 dbProfile.Blockers.Add(new Blocker
                 {
                     Reason = request.BlockerReason,
@@ -102,20 +112,20 @@ namespace Service.ClientProfile.Services
                 });
 
 
-                var clientBlockers = 
+                var clientBlockers =
                     context.Blockers.Where(itm => itm.Profile.ClientId == request.ClientId).ToList();
-                
+
                 var profileAfterSave = await context.ClientProfiles
                     .FirstOrDefaultAsync(itm => itm.ClientId == request.ClientId);
-                
+
                 if (profileAfterSave == null)
                     return new ClientProfileUpdateResponse
                     {
                         IsSuccess = true,
                         ClientId = request.ClientId
                     };
-                
-                
+
+
                 profileAfterSave.Blockers = clientBlockers;
                 await _cache.AddOrUpdateClientProfile(profileAfterSave);
 
@@ -139,11 +149,12 @@ namespace Service.ClientProfile.Services
 
         public async Task<ClientProfileUpdateResponse> DeleteBlockerFromClient(DeleteBlockerFromClientRequest request)
         {
-            _logger.LogInformation("Removing blocker for clientId {clientId}, blockerId {blockerId}", request.ClientId, request.BlockerId.ToString());
+            _logger.LogInformation("Removing blocker for clientId {clientId}, blockerId {blockerId}", request.ClientId,
+                request.BlockerId.ToString());
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
                 var blocker = profile.Blockers?.FirstOrDefault(t => t.BlockerId == request.BlockerId);
                 if (blocker == null)
@@ -153,9 +164,9 @@ namespace Service.ClientProfile.Services
                         IsSuccess = false,
                         Error = "Blocker not found"
                     };
-                
+
                 profile.Blockers.Remove(blocker);
-                
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 context.Blockers.Remove(blocker);
                 context.ClientProfiles.Update(profile);
@@ -183,7 +194,7 @@ namespace Service.ClientProfile.Services
                     ClientId = request.ClientId,
                     Error = e.Message
                 };
-            }        
+            }
         }
 
         public async Task<ClientProfileUpdateResponse> Enable2Fa(Enable2FaRequest request)
@@ -192,10 +203,10 @@ namespace Service.ClientProfile.Services
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
                 profile.Status2FA = Status2FA.Enabled;
-                
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await _cache.AddOrUpdateClientProfile(profile);
@@ -230,10 +241,10 @@ namespace Service.ClientProfile.Services
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-           
-                profile.Status2FA = Status2FA.Disabled; 
-                
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
+                profile.Status2FA = Status2FA.Disabled;
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await _cache.AddOrUpdateClientProfile(profile);
@@ -260,19 +271,18 @@ namespace Service.ClientProfile.Services
                     Error = e.Message
                 };
             }
-            
         }
 
         public async Task<Domain.Models.ClientProfile> GetOrCreateProfile(GetClientProfileRequest request) =>
             await GetOrCreateProfile(request.ClientId);
 
         public async Task<GetAllClientProfilesResponse> GetAllProfiles()
-        { 
+        {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var entities = context.ClientProfiles
-                .Include(t=>t.Blockers)
+                .Include(t => t.Blockers)
                 .ToList();
-            
+
             return new GetAllClientProfilesResponse()
             {
                 ClientProfiles = entities
@@ -284,7 +294,7 @@ namespace Service.ClientProfile.Services
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var clientProfile = context.ClientProfiles
-                .Include(t=>t.Blockers)
+                .Include(t => t.Blockers)
                 .FirstOrDefault(t => t.ClientId == clientId);
 
             if (clientProfile != null)
@@ -293,10 +303,12 @@ namespace Service.ClientProfile.Services
                 {
                     clientProfile.ReferralCode = await AddReferralCodeToExistingUser(clientProfile);
                 }
+
                 if (string.IsNullOrEmpty(clientProfile.ExternalClientId))
                 {
                     clientProfile.ExternalClientId = await AddExternalClientIdToExistingUser(clientProfile);
                 }
+
                 return clientProfile;
             }
 
@@ -318,9 +330,8 @@ namespace Service.ClientProfile.Services
             await _cache.AddOrUpdateClientProfile(profile);
 
             return profile;
-            
         }
-        
+
         private async Task<string> GenerateExternalClientId(string clientId)
         {
             if (String.IsNullOrEmpty(clientId))
@@ -330,8 +341,8 @@ namespace Service.ClientProfile.Services
             {
                 Id = clientId
             });
-            
-            if(pd.PersonalData == null)
+
+            if (pd.PersonalData == null)
                 return String.Empty;
 
             using var sha = System.Security.Cryptography.SHA256.Create();
@@ -339,12 +350,12 @@ namespace Service.ClientProfile.Services
             byte[] hash = sha.ComputeHash(textData);
             return BitConverter.ToString(hash).Replace("-", String.Empty);
         }
-        
+
         private async Task<string> AddExternalClientIdToExistingUser(Domain.Models.ClientProfile profile)
-        {            
+        {
             _logger.LogInformation("Generating external client id for {clientId}", profile.ClientId);
 
-            var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+            var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var externalClientId = await GenerateExternalClientId(profile.ClientId);
@@ -358,15 +369,15 @@ namespace Service.ClientProfile.Services
                 OldProfile = oldProfile,
                 NewProfile = profile
             });
-            
+
             return externalClientId;
         }
-        
+
         private async Task<string> AddReferralCodeToExistingUser(Domain.Models.ClientProfile profile)
-        {            
+        {
             _logger.LogInformation("Generating Referral code for clientId {clientId}", profile.ClientId);
 
-            var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+            var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var referralCode = await GenerateReferralCode(context, profile.ClientId);
@@ -380,7 +391,7 @@ namespace Service.ClientProfile.Services
                 OldProfile = oldProfile,
                 NewProfile = profile
             });
-            
+
             return referralCode;
         }
 
@@ -389,7 +400,7 @@ namespace Service.ClientProfile.Services
             var codes = new List<string>();
 
             var str = clientId.Replace("-", "").ToUpper();
-            for (int i = 0; i < str.Length-6; i++)
+            for (int i = 0; i < str.Length - 6; i++)
             {
                 codes.Add(str.Substring(i, 6));
             }
@@ -410,7 +421,7 @@ namespace Service.ClientProfile.Services
                 for (int k = 0; k < 3; k++)
                 {
                     str = Guid.NewGuid().ToString("N").Replace("-", "").ToUpper();
-                    for (int i = 0; i < str.Length-6; i++)
+                    for (int i = 0; i < str.Length - 6; i++)
                     {
                         codes.Add(str.Substring(i, 6));
                     }
@@ -432,18 +443,18 @@ namespace Service.ClientProfile.Services
             throw new Exception($"Cannot generate Referrer Code for client {clientId}");
         }
 
-        public async Task<ClientProfileUpdateResponse> UpdateConfirmStatuses(string clientId, bool phoneConfirmed, bool emailConfirmed)
+        public async Task<ClientProfileUpdateResponse> UpdateConfirmStatuses(string clientId, bool phoneConfirmed,
+            bool emailConfirmed)
         {
-
             _logger.LogInformation("Updating confirm statuses for clientId {clientId}", clientId);
             try
             {
                 var profile = await GetOrCreateProfile(clientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-           
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
                 profile.EmailConfirmed = emailConfirmed;
                 profile.PhoneConfirmed = phoneConfirmed;
-                
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await _cache.AddOrUpdateClientProfile(profile);
@@ -471,17 +482,17 @@ namespace Service.ClientProfile.Services
                 };
             }
         }
-        
+
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request)
         {
             _logger.LogInformation("Setting KYC for clientId {clientId}", request.ClientId);
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-           
-                profile.KYCPassed = true; 
-                
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
+                profile.KYCPassed = true;
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await _cache.AddOrUpdateClientProfile(profile);
@@ -509,25 +520,25 @@ namespace Service.ClientProfile.Services
                 };
             }
         }
-        
+
         public async Task<ClientByReferralResponse> GetProfileByReferralCode(string code)
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var profile = context.ClientProfiles.FirstOrDefault(t => t.ReferralCode == code);
 
-            return profile != null 
-                ?  new ClientByReferralResponse() { IsExists = true, ClientId = profile.ClientId }
-                : new ClientByReferralResponse() { IsExists = false };
+            return profile != null
+                ? new ClientByReferralResponse() {IsExists = true, ClientId = profile.ClientId}
+                : new ClientByReferralResponse() {IsExists = false};
         }
-        
+
         public async Task<GetAllClientProfilesResponse> GetReferrals(string clientId)
-        {             
+        {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var entities = context.ClientProfiles
-                .Where(t=>t.ReferrerClientId == clientId)
-                .Include(t=>t.Blockers)
+                .Where(t => t.ReferrerClientId == clientId)
+                .Include(t => t.Blockers)
                 .ToList();
-            
+
             return new GetAllClientProfilesResponse()
             {
                 ClientProfiles = entities
@@ -540,7 +551,7 @@ namespace Service.ClientProfile.Services
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
                 var referrer = await GetProfileByReferralCode(request.ReferralCode);
                 if (!referrer.IsExists)
@@ -554,7 +565,7 @@ namespace Service.ClientProfile.Services
                 }
 
                 profile.ReferrerClientId = referrer.ClientId;
-                
+
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
                 await _cache.AddOrUpdateClientProfile(profile);
@@ -582,14 +593,14 @@ namespace Service.ClientProfile.Services
                 };
             }
         }
-        
+
         public async Task<ClientProfileUpdateResponse> ChangeReferralCode(ChangeReferralCodeRequest request)
         {
             _logger.LogInformation("Changing referral code for clientId {clientId}", request.ClientId);
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
 
                 if (string.IsNullOrWhiteSpace(request.ReferralCode))
                 {
@@ -613,7 +624,7 @@ namespace Service.ClientProfile.Services
                 }
 
                 profile.ReferralCode = request.ReferralCode;
-                
+
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
                 await context.UpsertAsync(profile);
@@ -654,14 +665,15 @@ namespace Service.ClientProfile.Services
             };
         }
 
-        public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request)
+        public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(
+            SetMarketingEmailSettingsRequest request)
         {
             _logger.LogInformation("Setting marketing email settings for clientId {clientId}", request.ClientId);
             try
             {
                 var profile = await GetOrCreateProfile(request.ClientId);
-                var oldProfile = (Domain.Models.ClientProfile)profile.Clone();
-           
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
                 profile.MarketingEmailAllowed = request.IsAllowed;
 
                 await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
@@ -689,7 +701,7 @@ namespace Service.ClientProfile.Services
                     ClientId = request.ClientId,
                     Error = e.Message
                 };
-            }        
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ using Service.ClientProfile.Domain.Models.NoSql;
 using Service.ClientProfile.Grpc;
 using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
+using Service.ClientProfile.Grpc.Models.Requests.Blockers;
 using Service.ClientProfile.Grpc.Models.Responses;
 
 namespace Service.ClientProfile.Client
@@ -49,8 +50,8 @@ namespace Service.ClientProfile.Client
             };
         }
 
-        public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers() => _grpcService.GetClientBlockers();
-
+        public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers(GetClientProfileBlockersRequest request)=> _grpcService.GetClientBlockers(request);
+        
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) => await _grpcService.SetKYCPassed(request);
         
         public async Task<ClientByReferralResponse> GetProfileByReferralCode(GetProfileByReferralCodeRequest request) => await _grpcService.GetProfileByReferralCode(request);

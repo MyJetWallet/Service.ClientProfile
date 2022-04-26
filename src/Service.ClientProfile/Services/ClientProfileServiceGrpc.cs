@@ -4,6 +4,7 @@ using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc;
 using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
+using Service.ClientProfile.Grpc.Models.Requests.Blockers;
 using Service.ClientProfile.Grpc.Models.Responses;
 
 namespace Service.ClientProfile.Services
@@ -28,7 +29,8 @@ namespace Service.ClientProfile.Services
         public async Task<Domain.Models.ClientProfile> GetOrCreateProfile(GetClientProfileRequest request) => await _clientProfileService.GetOrCreateProfile(request);
 
         public async Task<GetAllClientProfilesResponse> GetAllProfiles() => await _clientProfileService.GetAllProfiles();
-        public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers() => _clientProfileService.GetClientProfileBlockers();
+
+        public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers(GetClientProfileBlockersRequest request) => _clientProfileService.GetClientProfileBlockers(request);
 
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) =>
            await _clientProfileService.SetKYCPassed(request);
