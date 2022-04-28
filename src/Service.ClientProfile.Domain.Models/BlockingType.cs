@@ -5,6 +5,7 @@ namespace Service.ClientProfile.Domain.Models
         Withdrawal,
         Transfer,
         Trade,
-        Login
+        Login,
+        PhoneNumberUpdate
     }
 }
