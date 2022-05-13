@@ -658,7 +658,7 @@ namespace Service.ClientProfile.Services
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var list = context.ClientProfiles
-                .Where(t => t.ExternalClientId.Contains(externalId, StringComparison.InvariantCultureIgnoreCase)).ToList();
+                .Where(t => t.ExternalClientId.Contains(externalId.ToLower()) || t.ExternalClientId.Contains(externalId.ToUpper())).ToList();
             return new GetAllClientProfilesResponse()
             {
                 ClientProfiles = list
