@@ -348,7 +348,7 @@ namespace Service.ClientProfile.Services
             using var sha = System.Security.Cryptography.SHA256.Create();
             byte[] textData = System.Text.Encoding.UTF8.GetBytes(pd.PersonalData.Email);
             byte[] hash = sha.ComputeHash(textData);
-            return BitConverter.ToString(hash).Replace("-", String.Empty);
+            return BitConverter.ToString(hash).Replace("-", String.Empty).ToLower();
         }
 
         private async Task<string> AddExternalClientIdToExistingUser(Domain.Models.ClientProfile profile)
@@ -658,7 +658,7 @@ namespace Service.ClientProfile.Services
         {
             await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
             var list = context.ClientProfiles
-                .Where(t => t.ExternalClientId.Contains(externalId)).ToList();
+                .Where(t => t.ExternalClientId.Contains(externalId, StringComparison.InvariantCultureIgnoreCase)).ToList();
             return new GetAllClientProfilesResponse()
             {
                 ClientProfiles = list
