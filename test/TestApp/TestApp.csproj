@@ -7,10 +7,13 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.Net.Client" Version="2.46.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.5" />
+    <PackageReference Include="MyJetWallet.Service.PersonalData.Client" Version="1.1.9" />
     <PackageReference Include="protobuf-net.Grpc" Version="1.0.152" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Service.ClientProfile.Postgres\Service.ClientProfile.Postgres.csproj" />
     <ProjectReference Include="..\..\src\Service.ClientProfile.Client\Service.ClientProfile.Client.csproj" />
     <ProjectReference Include="..\..\src\Service.ClientProfile.Grpc\Service.ClientProfile.Grpc.csproj" />
   </ItemGroup>

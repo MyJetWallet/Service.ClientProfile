@@ -15,10 +15,10 @@ namespace Service.ClientProfile.Modules
         protected override void Load(ContainerBuilder builder)
         {
             var spotServiceBusClient = builder
-                .RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), Program.LogFactory);
+                .RegisterMyServiceBusTcpClient(() => Program.Settings.SpotServiceBusHostPort, Program.LogFactory);
             
             builder.RegisterMyServiceBusPublisher<ClientProfileUpdateMessage>(spotServiceBusClient, ClientProfileUpdateMessage.TopicName, false);
-            builder.RegisterMyNoSqlWriter<ClientProfileNoSqlEntity>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), ClientProfileNoSqlEntity.TableName);
+            builder.RegisterMyNoSqlWriter<ClientProfileNoSqlEntity>(() => Program.Settings.MyNoSqlWriterUrl, ClientProfileNoSqlEntity.TableName);
             
             var queueName = "Spot-Client-Profile-Service";
             builder.RegisterPersonalDataClient(Program.Settings.PersonalDataServiceUrl);

@@ -26,7 +26,7 @@ namespace Service.ClientProfile.Jobs
             _dbContextOptionsBuilder = dbContextOptionsBuilder;
             _cache = cache;
             _timer = new MyTaskTimer(typeof(ExpirationCheckJob),
-                TimeSpan.FromMinutes(Program.ReloadedSettings(e => e.ExpirationCheckTimerInMin).Invoke()),
+                TimeSpan.FromMinutes(Program.Settings.ExpirationCheckTimerInMin),
                 logger, DoTime);
         }
 

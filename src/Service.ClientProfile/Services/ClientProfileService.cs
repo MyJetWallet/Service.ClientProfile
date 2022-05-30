@@ -289,6 +289,21 @@ namespace Service.ClientProfile.Services
             };
         }
 
+        public async Task<GetAllClientProfilesResponse> GetAllProfiles(GetAllRequest request)
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var entities = context.ClientProfiles
+                .Skip(request.Skip)
+                .Take(request.Take)
+                .Include(t => t.Blockers)
+                .ToList();
+
+            return new GetAllClientProfilesResponse()
+            {
+                ClientProfiles = entities
+            };
+        }
+
 
         private async Task<Domain.Models.ClientProfile> GetOrCreateProfile(string clientId)
         {
@@ -323,7 +338,8 @@ namespace Service.ClientProfile.Services
                 PhoneConfirmed = false,
                 KYCPassed = false,
                 ReferralCode = await GenerateReferralCode(context, clientId),
-                ExternalClientId = await GenerateExternalClientId(clientId)
+                ExternalClientId = await GenerateExternalClientId(clientId),
+                MarketingEmailAllowed = true
             };
 
             await context.UpsertAsync(profile);

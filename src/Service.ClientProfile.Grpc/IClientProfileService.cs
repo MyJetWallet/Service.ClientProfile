@@ -30,6 +30,9 @@ namespace Service.ClientProfile.Grpc
         Task<GetAllClientProfilesResponse> GetAllProfiles();
         
         [OperationContract]
+        Task<GetAllClientProfilesResponse> GetAllProfilesPaged(GetAllRequest request);
+        
+        [OperationContract]
         IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers(GetClientProfileBlockersRequest request);
         
         [OperationContract]

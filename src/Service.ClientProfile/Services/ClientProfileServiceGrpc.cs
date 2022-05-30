@@ -29,6 +29,7 @@ namespace Service.ClientProfile.Services
         public async Task<Domain.Models.ClientProfile> GetOrCreateProfile(GetClientProfileRequest request) => await _clientProfileService.GetOrCreateProfile(request);
 
         public async Task<GetAllClientProfilesResponse> GetAllProfiles() => await _clientProfileService.GetAllProfiles();
+        public async Task<GetAllClientProfilesResponse> GetAllProfilesPaged(GetAllRequest request) => await _clientProfileService.GetAllProfiles(request);
 
         public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers(GetClientProfileBlockersRequest request) => _clientProfileService.GetClientProfileBlockers(request);
 

@@ -50,6 +50,11 @@ namespace Service.ClientProfile.Client
             };
         }
 
+        public async Task<GetAllClientProfilesResponse> GetAllProfilesPaged(GetAllRequest request)
+        {
+            return await _grpcService.GetAllProfilesPaged(request);
+        }
+
         public IAsyncEnumerable<BlockerGrpcModel> GetClientBlockers(GetClientProfileBlockersRequest request)=> _grpcService.GetClientBlockers(request);
         
         public async Task<ClientProfileUpdateResponse> SetKYCPassed(SetKYCPassedRequest request) => await _grpcService.SetKYCPassed(request);
