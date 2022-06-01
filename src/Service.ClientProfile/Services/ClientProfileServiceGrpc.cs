@@ -47,5 +47,6 @@ namespace Service.ClientProfile.Services
             await _clientProfileService.GetProfileByExternalId(request.SearchText);
 
         public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request) => await _clientProfileService.SetMarketingEmailSettings(request);
+        public async Task<ClientProfileUpdateResponse> SetUserType(SetUserTypeRequest request)=> await _clientProfileService.SetUserType(request);
     }
 }

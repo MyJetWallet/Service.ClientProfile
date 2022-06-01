@@ -70,5 +70,6 @@ namespace Service.ClientProfile.Client
         public async Task<GetAllClientProfilesResponse> GetProfileByExternalId(GetClientByExternalIdRequest request) => await _grpcService.GetProfileByExternalId(request);
 
         public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request) => await _grpcService.SetMarketingEmailSettings(request);
+        public async Task<ClientProfileUpdateResponse> SetUserType(SetUserTypeRequest request)=> await _grpcService.SetUserType(request);
     }
 }

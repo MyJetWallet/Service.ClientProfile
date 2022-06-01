@@ -19,7 +19,7 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 9)] public DateTime LastTs { get; set; }
         [DataMember(Order = 10)] public string ExternalClientId { get; set; }
         [DataMember(Order = 11)] public bool MarketingEmailAllowed { get; set; }
-
+        [DataMember(Order = 12)] public UserType UserType { get; set; }
 
         public object Clone()
         {

@@ -55,5 +55,8 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request);
+
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> SetUserType(SetUserTypeRequest request);
     }
 }
