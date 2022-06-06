@@ -58,5 +58,8 @@ namespace Service.ClientProfile.Grpc
 
         [OperationContract]
         Task<ClientProfileUpdateResponse> SetUserType(SetUserTypeRequest request);
+        
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> SetInternalSimpleEmailAsync(SetInternalSimpleEmailRequest request);
     }
 }

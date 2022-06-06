@@ -20,6 +20,7 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 10)] public string ExternalClientId { get; set; }
         [DataMember(Order = 11)] public bool MarketingEmailAllowed { get; set; }
         [DataMember(Order = 12)] public UserType UserType { get; set; }
+        [DataMember(Order = 13)] public string InternalSimpleEmail { get; set; }
 
         public object Clone()
         {

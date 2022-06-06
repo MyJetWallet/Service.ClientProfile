@@ -71,5 +71,9 @@ namespace Service.ClientProfile.Client
 
         public async Task<ClientProfileUpdateResponse> SetMarketingEmailSettings(SetMarketingEmailSettingsRequest request) => await _grpcService.SetMarketingEmailSettings(request);
         public async Task<ClientProfileUpdateResponse> SetUserType(SetUserTypeRequest request)=> await _grpcService.SetUserType(request);
+        public Task<ClientProfileUpdateResponse> SetInternalSimpleEmailAsync(SetInternalSimpleEmailRequest request)
+        {
+            return _grpcService.SetInternalSimpleEmailAsync(request);
+        }
     }
 }
