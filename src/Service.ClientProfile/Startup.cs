@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Autofac;
+using Microsoft.EntityFrameworkCore;
 using MyJetWallet.Sdk.GrpcMetrics;
 using MyJetWallet.Sdk.GrpcSchema;
 using MyJetWallet.Sdk.Postgres;
@@ -14,6 +15,7 @@ using ProtoBuf.Grpc.Server;
 using Service.ClientProfile.Grpc;
 using Service.ClientProfile.Modules;
 using Service.ClientProfile.Postgres;
+using Service.ClientProfile.Postgres.Triggers;
 using Service.ClientProfile.Services;
 using SimpleTrading.BaseMetrics;
 using SimpleTrading.ServiceStatusReporterConnector;
@@ -33,6 +35,17 @@ namespace Service.ClientProfile
             DatabaseContext.LoggerFactory = null;
 
             services.AddMyTelemetry("SP-", Program.Settings.ZipkinUrl);
+
+            services.AddSingleton<ClientProfileService>();
+
+            services.AddDbContext<DatabaseContext>(options =>
+            {
+                options.UseTriggers(trigger =>
+                {
+                    trigger.AddTrigger<BlockersTrigger>();
+                    trigger.AddTrigger<ClientProfileTrigger>();
+                });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
