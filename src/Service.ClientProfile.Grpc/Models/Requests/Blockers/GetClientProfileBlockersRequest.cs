@@ -7,4 +7,6 @@ namespace Service.ClientProfile.Grpc.Models.Requests.Blockers;
 public class GetClientProfileBlockersRequest
 {
     [DataMember(Order = 1)] public BlockingType? Type { get; set; }
+
+    [DataMember(Order = 2)] public string ClientId { get; set; }
 }

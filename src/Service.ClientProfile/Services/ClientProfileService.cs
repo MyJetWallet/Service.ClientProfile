@@ -49,6 +49,11 @@ namespace Service.ClientProfile.Services
                 clientBlockers = clientBlockers.Where(itm => itm.BlockedOperationType == request.Type);
             }
 
+            if (!string.IsNullOrEmpty(request.ClientId))
+            {
+                clientBlockers = clientBlockers.Where(itm => itm.Profile.ClientId == request.ClientId);
+            }
+
             await foreach (var blocker in clientBlockers.AsAsyncEnumerable())
             {
                 yield return new BlockerGrpcModel
