@@ -14,9 +14,11 @@ namespace Service.ClientProfile.Postgres
 
         public const string ProfilesTableName = "profiles";
         public const string BlockerTableName = "blockers";
+        public const string ReviewsTableName = "reviews";
 
         public DbSet<Domain.Models.ClientProfile> ClientProfiles { get; set; }
         public DbSet<Blocker> Blockers { get; set; }
+        public DbSet<ReviewResult> ReviewResults { get; set; }
 
         public DatabaseContext(DbContextOptions options) : base(options)
         {
@@ -38,6 +40,7 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.ReferrerClientId).HasMaxLength(128);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.LastTs).HasDefaultValue(DateTime.MinValue);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.InternalSimpleEmail);
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.AskToSubmitReview).HasDefaultValue(false);
 
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferrerClientId);
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferralCode);
@@ -51,6 +54,12 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Blocker>().Property(e => e.LastTs).HasDefaultValue(DateTime.MinValue);
             modelBuilder.Entity<Blocker>().HasIndex(e => e.LastTs);
 
+            modelBuilder.Entity<ReviewResult>().ToTable(ReviewsTableName);
+            modelBuilder.Entity<ReviewResult>().HasKey(e => e.Id);
+            modelBuilder.Entity<ReviewResult>().Property(e => e.Id).UseIdentityColumn();
+            modelBuilder.Entity<ReviewResult>().Property(e => e.Timestamp).HasDefaultValue(DateTime.MinValue);
+            modelBuilder.Entity<ReviewResult>().HasIndex(e => e.ClientId);
+            
             base.OnModelCreating(modelBuilder);
         }
 

@@ -61,5 +61,8 @@ namespace Service.ClientProfile.Grpc
         
         [OperationContract]
         Task<ClientProfileUpdateResponse> SetInternalSimpleEmailAsync(SetInternalSimpleEmailRequest request);
+        
+        [OperationContract]
+        Task<ClientProfileUpdateResponse> SubmitReview(SubmitReviewRequest request);
     }
 }

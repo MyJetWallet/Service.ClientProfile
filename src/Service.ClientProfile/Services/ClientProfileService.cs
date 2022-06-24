@@ -800,5 +800,81 @@ namespace Service.ClientProfile.Services
                 };
             }
         }
+        
+        public async Task SetSubmitReviewFlag(string clientId, bool shouldAsk)
+        {
+            _logger.LogInformation("Setting InternalSimpleEmail for clientId {clientId}", clientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(clientId);
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
+                if(profile.AskToSubmitReview == shouldAsk)
+                    return;
+                
+                profile.AskToSubmitReview = shouldAsk;
+
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                await context.UpsertAsync(profile);
+                await _cache.AddOrUpdateClientProfile(profile);
+                
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+                
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When setting InternalSimpleEmail to client {clientId}", clientId);
+            }
+        }
+        
+        public async Task<ClientProfileUpdateResponse> SubmitReview(SubmitReviewRequest request)
+        {
+            _logger.LogInformation("Submitting review for clientId {clientId}", request.ClientId);
+            try
+            {
+                var review = new ReviewResult
+                {
+                    ClientId = request.ClientId,
+                    Timestamp = DateTime.UtcNow,
+                    Stars = request.Stars,
+                    Action = request.Action,
+                    ReviewText = request.ReviewText
+                };
+                
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                context.ReviewResults.Add(review);
+                await context.SaveChangesAsync();
+
+                await CheckIsShouldAskAndUpdateProfile(request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = request.ClientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When submitting review to client {clientId}", request.ClientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = request.ClientId,
+                    Error = e.Message
+                };
+            }
+        }
+        
+        public async Task<bool> CheckIsShouldAskAndUpdateProfile(string clientId)
+        {
+            await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+            var hasReview = await context.ReviewResults.Where(t => t.ClientId == clientId).AnyAsync();
+
+            await SetSubmitReviewFlag(clientId, !hasReview);
+            return !hasReview;
+        }
     }
 }
