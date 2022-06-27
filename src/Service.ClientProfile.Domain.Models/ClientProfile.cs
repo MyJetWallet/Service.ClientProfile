@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using MyJetWallet.ServiceBus.SessionAudit.Models;
 
 namespace Service.ClientProfile.Domain.Models
 {
@@ -22,6 +23,8 @@ namespace Service.ClientProfile.Domain.Models
         [DataMember(Order = 12)] public UserType UserType { get; set; }
         [DataMember(Order = 13)] public string InternalSimpleEmail { get; set; }
         [DataMember(Order = 14)] public bool AskToSubmitReview { get; set; }
+        [DataMember(Order = 15)] public bool? IsMobile { get; set; }
+	    [DataMember(Order = 16)] public DeviceOperationSystem DeviceOperationSystem { get; set; }
 
         public object Clone()
         {

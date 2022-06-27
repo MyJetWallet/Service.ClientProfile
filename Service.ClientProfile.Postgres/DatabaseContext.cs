@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Postgres;
 using Service.ClientProfile.Domain.Models;
 
@@ -23,7 +22,6 @@ namespace Service.ClientProfile.Postgres
         public DatabaseContext(DbContextOptions options) : base(options)
         {
         }
-        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +39,8 @@ namespace Service.ClientProfile.Postgres
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.LastTs).HasDefaultValue(DateTime.MinValue);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.InternalSimpleEmail);
             modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.AskToSubmitReview).HasDefaultValue(false);
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.DeviceOperationSystem).HasConversion<string>();
+            modelBuilder.Entity<Domain.Models.ClientProfile>().Property(e => e.IsMobile).HasDefaultValue(null);
 
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferrerClientId);
             modelBuilder.Entity<Domain.Models.ClientProfile>().HasIndex(e => e.ReferralCode);
@@ -83,7 +83,5 @@ namespace Service.ClientProfile.Postgres
             var result = await ClientProfiles.Upsert(entity).On(e => e.ClientId).AllowIdentityMatch().RunAsync();
             return result;
         }
-
-        
     }
 }
