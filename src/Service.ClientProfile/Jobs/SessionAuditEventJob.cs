@@ -43,8 +43,13 @@ namespace Service.ClientProfile.Jobs
 			clientProfile.DeviceOperationSystem = userAgentInfo.DeviceOperationSystem;
 			clientProfile.IsMobile = userAgentInfo.IsMobile;
 
+			if (clientProfile.IsMobile == userAgentInfo.IsMobile && clientProfile.DeviceOperationSystem == userAgentInfo.DeviceOperationSystem)
+				return;
+
 			context.ClientProfiles.Update(clientProfile);
 			await context.SaveChangesAsync();
+
+			_logger.LogInformation("Updated user-agent info for clientId: {clientId}, {@agentInfo}", clientId, userAgentInfo);
 
 			await _cache.AddOrUpdateClientProfile(clientProfile);
 		}
