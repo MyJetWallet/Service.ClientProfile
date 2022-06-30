@@ -40,11 +40,11 @@ namespace Service.ClientProfile.Jobs
 				return;
 			}
 
-			clientProfile.DeviceOperationSystem = userAgentInfo.DeviceOperationSystem;
-			clientProfile.IsMobile = userAgentInfo.IsMobile;
-
 			if (clientProfile.IsMobile == userAgentInfo.IsMobile && clientProfile.DeviceOperationSystem == userAgentInfo.DeviceOperationSystem)
 				return;
+
+			clientProfile.DeviceOperationSystem = userAgentInfo.DeviceOperationSystem;
+			clientProfile.IsMobile = userAgentInfo.IsMobile;
 
 			context.ClientProfiles.Update(clientProfile);
 			await context.SaveChangesAsync();
