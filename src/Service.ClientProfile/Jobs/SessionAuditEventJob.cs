@@ -3,6 +3,7 @@ using DotNetCoreDecorators;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.ServiceBus.SessionAudit.Models;
+using Service.ClientProfile.Grpc.Models.Requests;
 using Service.ClientProfile.Postgres;
 using Service.ClientProfile.Services;
 
@@ -12,13 +13,18 @@ namespace Service.ClientProfile.Jobs
 	{
 		private readonly DbContextOptionsBuilder<DatabaseContext> _dbContextOptionsBuilder;
 		private readonly ProfileCacheManager _cache;
+		private readonly ClientProfileService _clientProfileService;
 		private readonly ILogger<SessionAuditEventJob> _logger;
 
 		public SessionAuditEventJob(ISubscriber<SessionAuditEvent> subscriber, 
-			DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, ProfileCacheManager cache, ILogger<SessionAuditEventJob> logger)
+			DbContextOptionsBuilder<DatabaseContext> dbContextOptionsBuilder, 
+			ProfileCacheManager cache, 
+			ClientProfileService clientProfileService,
+			ILogger<SessionAuditEventJob> logger)
 		{
 			_dbContextOptionsBuilder = dbContextOptionsBuilder;
 			_cache = cache;
+			_clientProfileService = clientProfileService;
 			_logger = logger;
 			subscriber.Subscribe(HandleEvents);
 		}
@@ -31,27 +37,10 @@ namespace Service.ClientProfile.Jobs
 			UserAgentInfo userAgentInfo = message.UserAgentInfo;
 			string clientId = message.Session.TraderId;
 
-			await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+			var result = await _clientProfileService.SetUserAgentDataAsync(
+				clientId, userAgentInfo.DeviceOperationSystem, userAgentInfo.IsMobile);
 
-			Domain.Models.ClientProfile clientProfile = await context.ClientProfiles.FirstOrDefaultAsync(p => p.ClientId == clientId);
-			if (clientProfile == null)
-			{
-				_logger.LogError("Can't find ClientProfile for clientId: {clientId}", clientId);
-				return;
-			}
-
-			if (clientProfile.IsMobile == userAgentInfo.IsMobile && clientProfile.DeviceOperationSystem == userAgentInfo.DeviceOperationSystem)
-				return;
-
-			clientProfile.DeviceOperationSystem = userAgentInfo.DeviceOperationSystem;
-			clientProfile.IsMobile = userAgentInfo.IsMobile;
-
-			context.ClientProfiles.Update(clientProfile);
-			await context.SaveChangesAsync();
-
-			_logger.LogInformation("Updated user-agent info for clientId: {clientId}, {@agentInfo}", clientId, userAgentInfo);
-
-			await _cache.AddOrUpdateClientProfile(clientProfile);
+			_logger.LogInformation("Updated user-agent info for clientId: {clientId}. Status: {status}. Info: {@agentInfo}", clientId, result.IsSuccess.ToString(), userAgentInfo);
 		}
 	}
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.ServiceBus;
+using MyJetWallet.ServiceBus.SessionAudit.Models;
 using Service.ClientProfile.Domain.Models;
 using Service.ClientProfile.Grpc.Models;
 using Service.ClientProfile.Grpc.Models.Requests;
@@ -875,6 +876,54 @@ namespace Service.ClientProfile.Services
 
             await SetSubmitReviewFlag(clientId, !hasReview);
             return !hasReview;
+        }
+        
+        public async Task<ClientProfileUpdateResponse> SetUserAgentDataAsync(
+            string clientId, DeviceOperationSystem deviceOperationSystem, bool isMobile)
+        {
+            _logger.LogInformation("Setting SetUserAgentData for clientId {clientId}", clientId);
+            try
+            {
+                var profile = await GetOrCreateProfile(clientId);
+                
+                if (profile.IsMobile == isMobile && profile.DeviceOperationSystem == deviceOperationSystem)
+                    return new ClientProfileUpdateResponse()
+                    {
+                        IsSuccess = true,
+                        ClientId = clientId
+                    };
+                
+                var oldProfile = (Domain.Models.ClientProfile) profile.Clone();
+
+                profile.DeviceOperationSystem = deviceOperationSystem;
+                profile.IsMobile = isMobile;
+
+                await using var context = new DatabaseContext(_dbContextOptionsBuilder.Options);
+                await context.UpsertAsync(profile);
+                await _cache.AddOrUpdateClientProfile(profile);
+
+                await _publisher.PublishAsync(new ClientProfileUpdateMessage()
+                {
+                    OldProfile = oldProfile,
+                    NewProfile = profile
+                });
+
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = true,
+                    ClientId = clientId
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "When setting SetUserAgentData to client {clientId}", clientId);
+                return new ClientProfileUpdateResponse()
+                {
+                    IsSuccess = false,
+                    ClientId = clientId,
+                    Error = e.Message
+                };
+            }
         }
     }
 }
